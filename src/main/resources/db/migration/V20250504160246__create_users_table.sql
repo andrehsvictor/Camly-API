@@ -1,0 +1,20 @@
+CREATE TABLE IF NOT EXISTS users (
+    id UUID PRIMARY KEY NOT NULL DEFAULT gen_random_uuid(),
+    username VARCHAR(255) NOT NULL UNIQUE,
+    "password" VARCHAR(255),
+    email VARCHAR(255) NOT NULL UNIQUE,
+    "provider" VARCHAR(50) NOT NULL,
+    email_verified BOOLEAN DEFAULT FALSE,
+    picture_url VARCHAR(255),
+    post_count INT DEFAULT 0,
+    follower_count INT DEFAULT 0,
+    following_count INT DEFAULT 0,
+    full_name VARCHAR(255) NOT NULL,
+    bio TEXT,
+    email_verification_token VARCHAR(255),
+    email_verification_token_expires_at TIMESTAMP WITH TIME ZONE,
+    reset_password_token VARCHAR(255),
+    reset_password_token_expires_at TIMESTAMP WITH TIME ZONE,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);
