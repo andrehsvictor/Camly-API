@@ -1,6 +1,7 @@
 package andrehsvictor.camly.common.security;
 
 import java.util.Collection;
+import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.security.core.GrantedAuthority;
@@ -14,7 +15,7 @@ import lombok.RequiredArgsConstructor;
 public class UserDetailsImpl implements UserDetails {
 
     private static final long serialVersionUID = -2761636667441154736L;
-    
+
     private final User user;
 
     @Override
@@ -38,6 +39,10 @@ public class UserDetailsImpl implements UserDetails {
     @Override
     public boolean isEnabled() {
         return user.isEmailVerified();
+    }
+
+    public UUID getId() {
+        return user.getId();
     }
 
 }
