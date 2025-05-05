@@ -31,3 +31,10 @@ build/
 
 ### VS Code ###
 .vscode/
+
+### Camly ###
+.env
+*.log
+*.pem
+keys/
+application-dev.yml
