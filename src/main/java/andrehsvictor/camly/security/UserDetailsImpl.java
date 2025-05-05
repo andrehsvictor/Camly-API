@@ -1,7 +1,6 @@
 package andrehsvictor.camly.security;
 
 import java.util.Collection;
-import java.util.UUID;
 import java.util.stream.Collectors;
 
 import org.springframework.security.core.GrantedAuthority;
@@ -39,10 +38,6 @@ public class UserDetailsImpl implements UserDetails {
     @Override
     public boolean isEnabled() {
         return user.isEmailVerified();
-    }
-
-    public UUID getId() {
-        return user.getId();
     }
 
 }
