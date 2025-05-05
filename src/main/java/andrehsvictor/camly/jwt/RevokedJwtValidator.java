@@ -1,4 +1,4 @@
-package andrehsvictor.camly.common.config;
+package andrehsvictor.camly.jwt;
 
 import org.springframework.security.oauth2.core.OAuth2Error;
 import org.springframework.security.oauth2.core.OAuth2ErrorCodes;
@@ -7,7 +7,7 @@ import org.springframework.security.oauth2.core.OAuth2TokenValidatorResult;
 import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.stereotype.Component;
 
-import andrehsvictor.camly.common.service.RevokedTokenService;
+import andrehsvictor.camly.revokedtoken.RevokedTokenService;
 import lombok.RequiredArgsConstructor;
 
 @Component

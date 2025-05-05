@@ -1,4 +1,4 @@
-package andrehsvictor.camly.common.config;
+package andrehsvictor.camly.redis;
 
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;

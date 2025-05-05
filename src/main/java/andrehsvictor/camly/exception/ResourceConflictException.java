@@ -1,4 +1,4 @@
-package andrehsvictor.camly.common.exception;
+package andrehsvictor.camly.exception;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.web.bind.annotation.ResponseStatus;

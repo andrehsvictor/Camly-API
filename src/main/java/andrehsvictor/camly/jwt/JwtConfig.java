@@ -1,4 +1,4 @@
-package andrehsvictor.camly.common.config;
+package andrehsvictor.camly.jwt;
 
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;

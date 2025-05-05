@@ -1,4 +1,4 @@
-package andrehsvictor.camly.common.service;
+package andrehsvictor.camly.revokedtoken;
 
 import java.time.Duration;
 import java.time.Instant;

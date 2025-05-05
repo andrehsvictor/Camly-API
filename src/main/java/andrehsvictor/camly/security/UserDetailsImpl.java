@@ -1,4 +1,4 @@
-package andrehsvictor.camly.common.security;
+package andrehsvictor.camly.security;
 
 import java.util.Collection;
 import java.util.UUID;
@@ -8,7 +8,7 @@ import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 
-import andrehsvictor.camly.user.model.User;
+import andrehsvictor.camly.user.User;
 import lombok.RequiredArgsConstructor;
 
 @RequiredArgsConstructor

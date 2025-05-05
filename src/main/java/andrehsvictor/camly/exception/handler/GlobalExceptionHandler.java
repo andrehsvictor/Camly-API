@@ -1,4 +1,4 @@
-package andrehsvictor.camly.common.exception.handler;
+package andrehsvictor.camly.exception.handler;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -18,13 +18,13 @@ import org.springframework.web.context.request.WebRequest;
 import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExceptionHandler;
 
-import andrehsvictor.camly.common.exception.BadRequestException;
-import andrehsvictor.camly.common.exception.ForbiddenOperationException;
-import andrehsvictor.camly.common.exception.ResourceConflictException;
-import andrehsvictor.camly.common.exception.UnauthorizedException;
-import andrehsvictor.camly.common.exception.dto.ErrorDto;
-import andrehsvictor.camly.common.exception.dto.ValidationErrorDto;
-import andrehsvictor.camly.common.exception.dto.ValidationErrorDto.FieldErrorDto;
+import andrehsvictor.camly.exception.BadRequestException;
+import andrehsvictor.camly.exception.ForbiddenOperationException;
+import andrehsvictor.camly.exception.ResourceConflictException;
+import andrehsvictor.camly.exception.UnauthorizedException;
+import andrehsvictor.camly.exception.dto.ErrorDto;
+import andrehsvictor.camly.exception.dto.ValidationErrorDto;
+import andrehsvictor.camly.exception.dto.ValidationErrorDto.FieldErrorDto;
 import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 

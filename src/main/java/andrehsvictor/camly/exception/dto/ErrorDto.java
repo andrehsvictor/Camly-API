@@ -1,4 +1,4 @@
-package andrehsvictor.camly.common.exception.dto;
+package andrehsvictor.camly.exception.dto;
 
 import java.time.LocalDateTime;
 

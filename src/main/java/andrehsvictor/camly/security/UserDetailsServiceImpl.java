@@ -1,11 +1,11 @@
-package andrehsvictor.camly.common.security;
+package andrehsvictor.camly.security;
 
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
-import andrehsvictor.camly.user.repository.UserRepository;
+import andrehsvictor.camly.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 
 @Service

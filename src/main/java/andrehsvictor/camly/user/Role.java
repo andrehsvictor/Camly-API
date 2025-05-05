@@ -1,4 +1,4 @@
-package andrehsvictor.camly.user.model;
+package andrehsvictor.camly.user;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
