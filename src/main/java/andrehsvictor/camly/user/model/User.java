@@ -2,6 +2,7 @@ package andrehsvictor.camly.user.model;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
@@ -105,7 +106,8 @@ public class User implements Serializable {
     @ElementCollection
     @CollectionTable(name = "users_roles", joinColumns = @JoinColumn(name = "user_id"))
     @Column(name = "name")
-    private Set<String> roles;
+    @Builder.Default
+    private Set<String> roles = new HashSet<>();
 
     @PreUpdate
     void preUpdate() {
