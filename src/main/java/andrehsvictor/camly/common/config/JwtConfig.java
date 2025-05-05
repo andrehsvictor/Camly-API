@@ -2,12 +2,16 @@ package andrehsvictor.camly.common.config;
 
 import java.security.interfaces.RSAPrivateKey;
 import java.security.interfaces.RSAPublicKey;
+import java.util.List;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.security.oauth2.core.OAuth2TokenValidator;
+import org.springframework.security.oauth2.jwt.Jwt;
 import org.springframework.security.oauth2.jwt.JwtDecoder;
 import org.springframework.security.oauth2.jwt.JwtEncoder;
+import org.springframework.security.oauth2.jwt.JwtValidators;
 import org.springframework.security.oauth2.jwt.NimbusJwtDecoder;
 import org.springframework.security.oauth2.jwt.NimbusJwtEncoder;
 import org.springframework.validation.annotation.Validated;
@@ -20,9 +24,11 @@ import com.nimbusds.jose.jwk.source.JWKSource;
 import com.nimbusds.jose.proc.SecurityContext;
 
 import jakarta.validation.constraints.NotNull;
+import lombok.RequiredArgsConstructor;
 
 @Validated
 @Configuration
+@RequiredArgsConstructor
 public class JwtConfig {
 
     @NotNull(message = "JWT private key must not be null")
@@ -33,9 +39,13 @@ public class JwtConfig {
     @Value("${camly.jwt.public-key.path}")
     private RSAPublicKey publicKey;
 
+    private final List<OAuth2TokenValidator<Jwt>> jwtValidators;
+
     @Bean
     JwtDecoder jwtDecoder() {
-        return NimbusJwtDecoder.withPublicKey(publicKey).build();
+        NimbusJwtDecoder jwtDecoder = NimbusJwtDecoder.withPublicKey(publicKey).build();
+        jwtDecoder.setJwtValidator(JwtValidators.createDefaultWithValidators(jwtValidators));
+        return jwtDecoder;
     }
 
     @Bean
