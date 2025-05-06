@@ -18,6 +18,23 @@ public class UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("User", "ID", id));
     }
 
+    public User getByEmail(String email) {
+        return userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResourceNotFoundException("User", "email", email));
+    }
+
+    public User getByEmailVerificationToken(String token) {
+        return userRepository.findByEmailVerificationToken(token)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Action token not found"));
+    }
+
+    public User getByPasswordResetToken(String token) {
+        return userRepository.findByPasswordResetToken(token)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "Action token not found"));
+    }
+
     public User save(User user) {
         return userRepository.save(user);
     }

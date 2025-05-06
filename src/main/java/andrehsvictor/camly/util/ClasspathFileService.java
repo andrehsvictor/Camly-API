@@ -10,7 +10,7 @@ import org.springframework.stereotype.Service;
 @Service
 public class ClasspathFileService {
 
-    public String getFileContent(String filePath) {
+    public String getContent(String filePath) {
         try {
             Path path = new ClassPathResource(filePath).getFile().toPath();
             return new String(Files.readString(path));
