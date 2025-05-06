@@ -9,11 +9,6 @@ spring:
       hibernate:
         jdbc:
           "[time_zone]": UTC
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: ${JWT_ISSUER_URI:http://localhost:8080}
 
 server:
   compression:

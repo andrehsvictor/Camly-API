@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verify Your Email - Camly</title>
+    <style>
+        :root {
+            --bg-dark: #001021;
+            --bg-secondary: #034748;
+            --primary: #11B5E4;
+            --primary-hover: #1481BA;
+            --accent: #0CAADC;
+            --text-light: #E0E0E0;
+        }
+
+        body {
+            background: var(--bg-dark);
+            color: var(--text-light);
+            font-family: 'Arial', sans-serif;
+            margin: 0;
+            padding: 0;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background: var(--bg-dark);
+            border-bottom: 1px solid var(--bg-secondary);
+            padding: 20px 0;
+            text-align: center;
+        }
+
+        header img {
+            max-width: 150px;
+        }
+
+        .logo {
+            font-size: 24px;
+            font-weight: bold;
+            color: var(--primary);
+            letter-spacing: 1px;
+        }
+
+        button {
+            background: var(--primary);
+            color: var(--bg-dark);
+            border: none;
+            padding: 12px 24px;
+            font-size: 16px;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            display: inline-block;
+            text-decoration: none;
+        }
+
+        button:hover {
+            background: var(--primary-hover);
+        }
+
+        .card {
+            background: var(--bg-secondary);
+            border-left: 3px solid var(--accent);
+            padding: 20px;
+            margin: 20px 0;
+            border-radius: 4px;
+        }
+
+        .highlight {
+            color: var(--primary);
+            font-weight: bold;
+        }
+
+        .footer {
+            text-align: center;
+            margin-top: 40px;
+            font-size: 14px;
+            color: #aaa;
+        }
+
+        .verification-link {
+            word-break: break-all;
+            color: var(--primary);
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <header>
+            <div class="logo">CAMLY</div>
+        </header>
+
+        <div class="card">
+            <h1>Verify Your Email</h1>
+            <p>Thank you for registering with Camly! To complete your registration and activate your account, please
+                verify your email address.</p>
+
+            <div style="text-align: center; margin: 30px 0;">
+                <a href="{{link}}" style="text-decoration: none;">
+                    <button>Verify My Email</button>
+                </a>
+            </div>
+
+            <p>If the button above doesn't work, please copy and paste the following link into your browser:</p>
+            <p class="verification-link">{{link}}</p>
+
+            <p><strong>Note:</strong> This verification link will expire in <span
+                    class="highlight">{{expiration}}</span>.</p>
+        </div>
+
+        <div class="card">
+            <h3>Need Help?</h3>
+            <p>If you didn't request this email, please ignore it or contact our support team if you have concerns.</p>
+        </div>
+
+        <div class="footer">
+            <p>&copy; 2025 Camly. All rights reserved.</p>
+            <p>This is an automated message, please do not reply to this email.</p>
+        </div>
+    </div>
+</body>
+
+</html>

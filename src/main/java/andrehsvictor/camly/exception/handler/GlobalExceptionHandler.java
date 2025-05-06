@@ -21,6 +21,7 @@ import org.springframework.web.servlet.mvc.method.annotation.ResponseEntityExcep
 import andrehsvictor.camly.exception.BadRequestException;
 import andrehsvictor.camly.exception.ForbiddenOperationException;
 import andrehsvictor.camly.exception.ResourceConflictException;
+import andrehsvictor.camly.exception.ResourceNotFoundException;
 import andrehsvictor.camly.exception.UnauthorizedException;
 import andrehsvictor.camly.exception.dto.ErrorDto;
 import andrehsvictor.camly.exception.dto.ValidationErrorDto;
@@ -138,6 +139,22 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
         log.error("Unauthorized access: {}", ex.getMessage());
         return new ResponseEntity<>(errorDto, HttpStatus.UNAUTHORIZED);
+    }
+
+    @ExceptionHandler(ResourceNotFoundException.class)
+    public ResponseEntity<ErrorDto> handleResourceNotFoundException(
+            ResourceNotFoundException ex,
+            HttpServletRequest request) {
+
+        var errorDto = ErrorDto.builder()
+                .status(HttpStatus.NOT_FOUND.value())
+                .message(ex.getMessage())
+                .requestId(UUID.randomUUID().toString())
+                .timestamp(LocalDateTime.now())
+                .build();
+
+        log.error("Resource not found: {}", ex.getMessage());
+        return new ResponseEntity<>(errorDto, HttpStatus.NOT_FOUND);
     }
 
     @ExceptionHandler({ BadCredentialsException.class, AuthenticationException.class })
