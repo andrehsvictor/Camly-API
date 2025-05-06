@@ -32,11 +32,11 @@ import lombok.RequiredArgsConstructor;
 public class JwtConfig {
 
     @NotNull(message = "JWT private key must not be null")
-    @Value("${camly.jwt.private-key.path}")
+    @Value("${camly.jwt.rsa.private-key.location}")
     private RSAPrivateKey privateKey;
 
     @NotNull(message = "JWT public key must not be null")
-    @Value("${camly.jwt.public-key.path}")
+    @Value("${camly.jwt.rsa.public-key.location}")
     private RSAPublicKey publicKey;
 
     private final List<OAuth2TokenValidator<Jwt>> jwtValidators;
