@@ -52,7 +52,7 @@ public class PasswordResetter {
     }
 
     public void resetPassword(String token, String newPassword) {
-        User user = userService.getByPasswordResetToken(token);
+        User user = userService.getByResetPasswordToken(token);
         if (user.getResetPasswordTokenExpiresAt().isBefore(LocalDateTime.now())) {
             throw new BadRequestException("Action token expired");
         }
