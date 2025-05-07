@@ -1,5 +1,6 @@
 package andrehsvictor.camly.jwt;
 
+import java.time.Duration;
 import java.time.Instant;
 import java.util.UUID;
 
@@ -16,6 +17,7 @@ import org.springframework.stereotype.Service;
 
 import andrehsvictor.camly.exception.BadRequestException;
 import andrehsvictor.camly.exception.UnauthorizedException;
+import andrehsvictor.camly.user.Role;
 import andrehsvictor.camly.user.User;
 import lombok.RequiredArgsConstructor;
 
@@ -54,11 +56,11 @@ public class JwtService {
                 .username(token.getClaim("username"))
                 .email(token.getClaim("email"))
                 .emailVerified(token.getClaim("email_verified"))
-                .roles(token.getClaim("roles"))
+                .role(Role.valueOf(token.getClaim("role")))
                 .build();
     }
 
-    private Jwt createToken(User user, JwtType type, java.time.Duration lifespan) {
+    private Jwt createToken(User user, JwtType type, Duration lifespan) {
         Instant issuedAt = Instant.now();
         Instant expiresAt = issuedAt.plus(lifespan);
 
@@ -67,7 +69,7 @@ public class JwtService {
                 .issuedAt(issuedAt)
                 .expiresAt(expiresAt)
                 .claim("type", type.getType())
-                .claim("roles", user.getRoles())
+                .claim("role", user.getRole().name())
                 .claim("username", user.getUsername())
                 .claim("email", user.getEmail())
                 .claim("email_verified", user.isEmailVerified())

@@ -3,9 +3,8 @@ package andrehsvictor.camly.google;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.Collections;
-import java.util.Set;
+import java.util.List;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -18,6 +17,7 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 import andrehsvictor.camly.exception.BadRequestException;
 import andrehsvictor.camly.exception.UnauthorizedException;
 import andrehsvictor.camly.security.UserDetailsImpl;
+import andrehsvictor.camly.user.Role;
 import andrehsvictor.camly.user.User;
 import andrehsvictor.camly.user.UserProvider;
 import andrehsvictor.camly.user.UserService;
@@ -95,7 +95,7 @@ public class GoogleAuthenticationService {
                 .emailVerified(emailVerified)
                 .pictureUrl(pictureUrl)
                 .provider(UserProvider.GOOGLE)
-                .roles(Collections.singleton("USER"))
+                .role(Role.USER)
                 .build();
 
         return userService.save(newUser);
@@ -119,9 +119,8 @@ public class GoogleAuthenticationService {
 
     private Authentication createAuthentication(User user) {
         UserDetailsImpl userDetails = new UserDetailsImpl(user);
-        Set<SimpleGrantedAuthority> authorities = user.getRoles().stream()
-                .map(SimpleGrantedAuthority::new)
-                .collect(Collectors.toSet());
+        List<SimpleGrantedAuthority> authorities = Collections.singletonList(
+                new SimpleGrantedAuthority(user.getRole().name()));
 
         return new UsernamePasswordAuthenticationToken(userDetails, null, authorities);
     }

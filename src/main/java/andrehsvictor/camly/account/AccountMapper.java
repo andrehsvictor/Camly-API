@@ -35,4 +35,5 @@ public interface AccountMapper {
     default boolean isEmptyString(String value) {
         return value != null && value.isBlank();
     }
+
 }
