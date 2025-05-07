@@ -3,7 +3,6 @@ package andrehsvictor.camly.google;
 import java.io.IOException;
 import java.security.GeneralSecurityException;
 import java.util.Collections;
-import java.util.List;
 import java.util.UUID;
 
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
@@ -16,7 +15,7 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 
 import andrehsvictor.camly.exception.BadRequestException;
 import andrehsvictor.camly.exception.ResourceConflictException;
-import andrehsvictor.camly.exception.UnauthorizedException;
+import andrehsvictor.camly.exception.ResourceNotFoundException;
 import andrehsvictor.camly.security.UserDetailsImpl;
 import andrehsvictor.camly.user.Role;
 import andrehsvictor.camly.user.User;
@@ -28,51 +27,76 @@ import lombok.RequiredArgsConstructor;
 @RequiredArgsConstructor
 public class GoogleAuthenticationService {
 
-    private final GoogleIdTokenVerifier googleIdTokenVerifier;
+    private final GoogleIdTokenVerifier tokenVerifier;
     private final UserService userService;
 
     public Authentication authenticate(String idToken) {
+        GoogleIdToken.Payload payload = verifyIdToken(idToken);
+        User user = findOrRegisterUser(payload);
+        return createAuthentication(user);
+    }
+
+    private GoogleIdToken.Payload verifyIdToken(String idToken) {
         try {
-            GoogleIdToken googleIdToken = googleIdTokenVerifier.verify(idToken);
+            GoogleIdToken googleIdToken = tokenVerifier.verify(idToken);
             if (googleIdToken == null) {
-                throw new BadRequestException("Failed to verify Google ID token");
+                throw new BadRequestException("Invalid ID token");
             }
-
-            GoogleIdToken.Payload payload = googleIdToken.getPayload();
-            User user = findOrRegisterUser(payload);
-
-            return createAuthentication(user);
+            return googleIdToken.getPayload();
         } catch (GeneralSecurityException | IOException e) {
-            throw new UnauthorizedException("Failed to verify Google ID token");
+            throw new RuntimeException("Failed to verify ID token", e);
         }
     }
 
     private User findOrRegisterUser(GoogleIdToken.Payload payload) {
         String email = payload.getEmail();
+        String providerId = payload.getSubject();
         boolean emailVerified = Boolean.TRUE.equals(payload.getEmailVerified());
         String pictureUrl = (String) payload.get("picture");
         String name = (String) payload.get("name");
 
+        User user = findExistingUser(email, providerId);
+
+        if (user == null) {
+            return createGoogleUser(email, providerId, emailVerified, name, pictureUrl);
+        }
+
+        return updateUserIfNeeded(user, emailVerified, pictureUrl, providerId);
+    }
+
+    private User findExistingUser(String email, String providerId) {
         try {
-            User user = userService.getByEmail(email);
+            User user = userService.getByProviderId(providerId);
 
-            if (user.getProvider() != UserProvider.GOOGLE) {
+            if (!email.equals(user.getEmail())) {
                 throw new ResourceConflictException(
-                        "User with email '" + email + "'' is already registered with a different provider");
-            }
-
-            if (updateUserIfNeeded(user, emailVerified, pictureUrl)) {
-                userService.save(user);
+                        "User with provider ID '" + providerId + "' has a different email address");
             }
 
             return user;
-        } catch (Exception e) {
-            return createGoogleUser(email, emailVerified, name, pictureUrl);
+        } catch (ResourceNotFoundException e) {
+            try {
+                User user = userService.getByEmail(email);
+
+                if (user.getProvider() != UserProvider.GOOGLE) {
+                    throw new ResourceConflictException(
+                            "User with email '" + email + "' is already registered with a different provider");
+                }
+
+                return user;
+            } catch (ResourceNotFoundException ex) {
+                return null;
+            }
         }
     }
 
-    private boolean updateUserIfNeeded(User user, boolean emailVerified, String pictureUrl) {
+    private User updateUserIfNeeded(User user, boolean emailVerified, String pictureUrl, String providerId) {
         boolean needsUpdate = false;
+
+        if (user.getProviderId() == null) {
+            user.setProviderId(providerId);
+            needsUpdate = true;
+        }
 
         if (!user.isEmailVerified() && emailVerified) {
             user.setEmailVerified(emailVerified);
@@ -84,19 +108,19 @@ public class GoogleAuthenticationService {
             needsUpdate = true;
         }
 
-        return needsUpdate;
+        return needsUpdate ? userService.save(user) : user;
     }
 
-    private User createGoogleUser(String email, boolean emailVerified, String name, String pictureUrl) {
-        String username = generateUniqueUsername(email);
-
+    private User createGoogleUser(String email, String providerId, boolean emailVerified, String name,
+            String pictureUrl) {
         User newUser = User.builder()
                 .email(email)
-                .username(username)
+                .username(generateUniqueUsername(email))
                 .fullName(name)
                 .emailVerified(emailVerified)
                 .pictureUrl(pictureUrl)
                 .provider(UserProvider.GOOGLE)
+                .providerId(providerId)
                 .role(Role.USER)
                 .build();
 
@@ -121,7 +145,7 @@ public class GoogleAuthenticationService {
 
     private Authentication createAuthentication(User user) {
         UserDetailsImpl userDetails = new UserDetailsImpl(user);
-        List<SimpleGrantedAuthority> authorities = Collections.singletonList(
+        var authorities = Collections.singletonList(
                 new SimpleGrantedAuthority(user.getRole().name()));
 
         return new UsernamePasswordAuthenticationToken(userDetails, null, authorities);

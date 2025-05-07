@@ -23,6 +23,12 @@ public class UserService {
                 .orElseThrow(() -> new ResourceNotFoundException("User", "email", email));
     }
 
+    public User getByProviderId(String providerId) {
+        return userRepository.findByProviderId(providerId)
+                .orElseThrow(() -> new ResourceNotFoundException(
+                        "User", "provider ID", providerId));
+    }
+
     public User getByEmailVerificationToken(String token) {
         return userRepository.findByEmailVerificationToken(token)
                 .orElseThrow(() -> new ResourceNotFoundException(

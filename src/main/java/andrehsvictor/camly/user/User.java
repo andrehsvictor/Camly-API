@@ -53,6 +53,9 @@ public class User implements Serializable {
     @Enumerated(EnumType.STRING)
     private UserProvider provider = UserProvider.LOCAL;
 
+    @Column(name = "provider_id", unique = true)
+    private String providerId;
+
     @Builder.Default
     @Column(name = "email_verified", nullable = false)
     private boolean emailVerified = false;
