@@ -1,7 +1,5 @@
 package andrehsvictor.camly.account;
 
-import java.util.UUID;
-
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -32,13 +30,11 @@ public class AccountService {
     private final PasswordResetter passwordResetter;
 
     public AccountDto get() {
-        User user = getCurrentUser();
-        return accountMapper.userToAccountDto(user);
+        return accountMapper.userToAccountDto(getCurrentUser());
     }
 
     public AccountDto create(CreateAccountDto createAccountDto) {
-        validateUsernameAvailability(createAccountDto.getUsername());
-        validateEmailAvailability(createAccountDto.getEmail());
+        validateUniqueFields(createAccountDto.getUsername(), createAccountDto.getEmail());
 
         User user = accountMapper.createAccountDtoToUser(createAccountDto);
         user.setPassword(passwordEncoder.encode(user.getPassword()));
@@ -49,9 +45,10 @@ public class AccountService {
 
     public AccountDto update(UpdateAccountDto updateAccountDto) {
         User user = getCurrentUser();
+        String newEmail = updateAccountDto.getEmail();
+        String newUsername = updateAccountDto.getUsername();
 
-        validateEmailUpdate(user, updateAccountDto.getEmail());
-        validateUsernameUpdate(user, updateAccountDto.getUsername());
+        validateFieldUpdates(user, newEmail, newUsername);
 
         accountMapper.updateUserFromUpdateAccountDto(updateAccountDto, user);
         userService.save(user);
@@ -60,30 +57,28 @@ public class AccountService {
     }
 
     public void delete() {
-        UUID userId = jwtService.getCurrentUserId();
-        userService.deleteById(userId);
+        userService.deleteById(jwtService.getCurrentUserId());
     }
 
     public void updatePassword(UpdatePasswordDto updatePasswordDto) {
         User user = getCurrentUser();
-        validateUserProviderForPasswordUpdate(user);
-
         String oldPassword = updatePasswordDto.getOldPassword();
         String newPassword = updatePasswordDto.getNewPassword();
 
-        validateOldPassword(user, oldPassword);
-        validateNewPassword(oldPassword, newPassword);
+        validateLocalProvider(user, "password");
+        validatePasswords(user, oldPassword, newPassword);
 
         user.setPassword(passwordEncoder.encode(newPassword));
         userService.save(user);
     }
 
-    public void sendActionEmail(SendActionEmailDto sendActionEmailDto) {
-        switch (sendActionEmailDto.getAction()) {
-            case VERIFY_EMAIL -> emailVerifier.sendVerificationEmail(
-                    sendActionEmailDto.getEmail(), sendActionEmailDto.getUrl());
-            case RESET_PASSWORD -> passwordResetter.sendPasswordResetEmail(
-                    sendActionEmailDto.getEmail(), sendActionEmailDto.getUrl());
+    public void sendActionEmail(SendActionEmailDto dto) {
+        String email = dto.getEmail();
+        String url = dto.getUrl();
+
+        switch (dto.getAction()) {
+            case VERIFY_EMAIL -> emailVerifier.sendVerificationEmail(email, url);
+            case RESET_PASSWORD -> passwordResetter.sendPasswordResetEmail(email, url);
         }
     }
 
@@ -92,63 +87,49 @@ public class AccountService {
     }
 
     public void resetPassword(PasswordResetDto passwordResetDto) {
-        passwordResetter.resetPassword(passwordResetDto.getToken(), passwordResetDto.getPassword());
+        passwordResetter.resetPassword(
+                passwordResetDto.getToken(),
+                passwordResetDto.getPassword());
     }
 
     private User getCurrentUser() {
-        UUID userId = jwtService.getCurrentUserId();
-        return userService.getById(userId);
+        return userService.getById(jwtService.getCurrentUserId());
     }
 
-    private void validateUsernameAvailability(String username) {
+    private void validateUniqueFields(String username, String email) {
         if (userService.existsByUsername(username)) {
             throw new ResourceConflictException("Username already taken");
         }
-    }
-
-    private void validateEmailAvailability(String email) {
         if (userService.existsByEmail(email)) {
             throw new ResourceConflictException("Email already taken");
         }
     }
 
-    private void validateEmailUpdate(User user, String newEmail) {
-        boolean isEmailChanged = !user.getEmail().equals(newEmail);
-
-        if (isEmailChanged) {
-            validateUserProviderForEmailUpdate(user);
-            validateEmailAvailability(newEmail);
+    private void validateFieldUpdates(User user, String newEmail, String newUsername) {
+        if (!user.getEmail().equals(newEmail)) {
+            validateLocalProvider(user, "email");
+            if (userService.existsByEmail(newEmail)) {
+                throw new ResourceConflictException("Email already taken");
+            }
             user.setEmailVerified(false);
         }
+
+        if (!user.getUsername().equals(newUsername) && userService.existsByUsername(newUsername)) {
+            throw new ResourceConflictException("Username already taken");
+        }
     }
 
-    private void validateUserProviderForEmailUpdate(User user) {
+    private void validateLocalProvider(User user, String fieldType) {
         if (user.getProvider() != UserProvider.LOCAL) {
-            throw new BadRequestException("Cannot update email with a social provider");
+            throw new BadRequestException("Cannot update " + fieldType + " with a social provider");
         }
     }
 
-    private void validateUsernameUpdate(User user, String newUsername) {
-        boolean isUsernameChanged = !user.getUsername().equals(newUsername);
-
-        if (isUsernameChanged) {
-            validateUsernameAvailability(newUsername);
-        }
-    }
-
-    private void validateUserProviderForPasswordUpdate(User user) {
-        if (user.getProvider() != UserProvider.LOCAL) {
-            throw new BadRequestException("Cannot update your password with a social provider");
-        }
-    }
-
-    private void validateOldPassword(User user, String oldPassword) {
+    private void validatePasswords(User user, String oldPassword, String newPassword) {
         if (!passwordEncoder.matches(oldPassword, user.getPassword())) {
             throw new BadRequestException("Old password is incorrect");
         }
-    }
 
-    private void validateNewPassword(String oldPassword, String newPassword) {
         if (oldPassword.equals(newPassword)) {
             throw new BadRequestException("New password cannot be the same as old password");
         }

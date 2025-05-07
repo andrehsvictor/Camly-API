@@ -2,7 +2,6 @@ package andrehsvictor.camly.account;
 
 import org.mapstruct.AfterMapping;
 import org.mapstruct.BeanMapping;
-import org.mapstruct.BeforeMapping;
 import org.mapstruct.Mapper;
 import org.mapstruct.MappingTarget;
 import org.mapstruct.NullValuePropertyMappingStrategy;
@@ -20,18 +19,20 @@ public interface AccountMapper {
     User createAccountDtoToUser(CreateAccountDto createAccountDto);
 
     @BeanMapping(nullValuePropertyMappingStrategy = NullValuePropertyMappingStrategy.IGNORE)
-    User updateUserFromUpdateAccountDto(
-            UpdateAccountDto updateAccountDto,
-            @MappingTarget User user);
+    User updateUserFromUpdateAccountDto(UpdateAccountDto updateAccountDto, @MappingTarget User user);
 
     @AfterMapping
-    default void afterMapping(UpdateAccountDto updateAccountDto, @MappingTarget User user) {
-        if (updateAccountDto.getPictureUrl() != null && !updateAccountDto.getPictureUrl().isBlank()) {
+    default void resetEmptyFields(UpdateAccountDto dto, @MappingTarget User user) {
+        if (isEmptyString(dto.getPictureUrl())) {
             user.setPictureUrl(null);
         }
-        if (updateAccountDto.getBio() != null && !updateAccountDto.getBio().isBlank()) {
+
+        if (isEmptyString(dto.getBio())) {
             user.setBio(null);
         }
     }
 
+    default boolean isEmptyString(String value) {
+        return value != null && value.isBlank();
+    }
 }

@@ -22,24 +22,31 @@ public class PasswordResetter {
     private static final String EMAIL_TEMPLATE_PATH = "templates/reset-password.html";
     private static final String EMAIL_SUBJECT = "Reset your password";
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+    private static final int TOKEN_BYTES_LENGTH = 32;
 
     private final PasswordEncoder passwordEncoder;
     private final EmailService emailService;
     private final UserService userService;
     private final ClasspathFileService classpathFileService;
-    private final ActionTokenLifespanProperties actionTokenLifespanProperties;
+    private final ActionTokenLifespanProperties tokenProperties;
 
     public void sendPasswordResetEmail(String email, String baseUrl) {
         User user = userService.getByEmail(email);
+
         String token = generateToken();
-        LocalDateTime expiresAt = generateTokenExpiration();
+        LocalDateTime expiresAt = LocalDateTime.now().plus(tokenProperties.getPasswordResetTokenLifespan());
 
         user.setResetPasswordToken(token);
         user.setResetPasswordTokenExpiresAt(expiresAt);
         userService.save(user);
 
-        String resetUrl = buildResetUrl(baseUrl, token);
-        String emailBody = prepareEmailBody(resetUrl);
+        String resetUrl = baseUrl + (baseUrl.contains("?") ? "&" : "?") + "token=" + token;
+        String template = classpathFileService.getContent(EMAIL_TEMPLATE_PATH);
+        String expirationText = formatDuration(tokenProperties.getPasswordResetTokenLifespan());
+
+        String emailBody = template
+                .replace("{{link}}", resetUrl)
+                .replace("{{expiration}}", expirationText);
 
         emailService.send(email, EMAIL_SUBJECT, emailBody);
     }
@@ -50,51 +57,28 @@ public class PasswordResetter {
             throw new BadRequestException("Action token expired");
         }
 
-        String encodedPassword = passwordEncoder.encode(newPassword);
-        user.setPassword(encodedPassword);
-
+        user.setPassword(passwordEncoder.encode(newPassword));
         user.setResetPasswordToken(null);
         user.setResetPasswordTokenExpiresAt(null);
-
         userService.save(user);
     }
 
-    private String buildResetUrl(String baseUrl, String token) {
-        return baseUrl + (baseUrl.contains("?") ? "&" : "?") + "token=" + token;
-    }
-
-    private String prepareEmailBody(String resetUrl) {
-        String template = classpathFileService.getContent(EMAIL_TEMPLATE_PATH);
-        Duration lifespan = actionTokenLifespanProperties.getPasswordResetTokenLifespan();
-
-        String expirationText = formatExpirationTime(lifespan);
-
-        return template
-                .replace("{{link}}", resetUrl)
-                .replace("{{expiration}}", expirationText);
-    }
-
-    private String formatExpirationTime(Duration duration) {
+    private String formatDuration(Duration duration) {
         long hours = duration.toHours();
-        long remainingMinutes = duration.toMinutesPart();
+        long minutes = duration.toMinutesPart();
 
         if (hours > 0) {
-            return hours + (hours == 1 ? " hour" : " hours") +
-                    (remainingMinutes > 0 ? " and " + remainingMinutes +
-                            (remainingMinutes == 1 ? " minute" : " minutes") : "");
+            String hourText = hours + (hours == 1 ? " hour" : " hours");
+            return minutes > 0 ? hourText + " and " + minutes + (minutes == 1 ? " minute" : " minutes") : hourText;
         } else {
-            return duration.toMinutes() +
-                    (duration.toMinutes() == 1 ? " minute" : " minutes");
+            long totalMinutes = duration.toMinutes();
+            return totalMinutes + (totalMinutes == 1 ? " minute" : " minutes");
         }
     }
 
     private String generateToken() {
-        byte[] randomBytes = new byte[32];
+        byte[] randomBytes = new byte[TOKEN_BYTES_LENGTH];
         SECURE_RANDOM.nextBytes(randomBytes);
         return Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
-    }
-
-    private LocalDateTime generateTokenExpiration() {
-        return LocalDateTime.now().plus(actionTokenLifespanProperties.getPasswordResetTokenLifespan());
     }
 }

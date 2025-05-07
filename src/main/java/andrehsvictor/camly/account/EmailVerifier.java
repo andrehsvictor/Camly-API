@@ -22,11 +22,12 @@ public class EmailVerifier {
     private static final String EMAIL_TEMPLATE_PATH = "templates/verify-email.html";
     private static final String EMAIL_SUBJECT = "Verify your email";
     private static final SecureRandom SECURE_RANDOM = new SecureRandom();
+    private static final int TOKEN_BYTES_LENGTH = 32;
 
     private final EmailService emailService;
     private final UserService userService;
     private final ClasspathFileService classpathFileService;
-    private final ActionTokenLifespanProperties actionTokenLifespanProperties;
+    private final ActionTokenLifespanProperties tokenProperties;
 
     public void sendVerificationEmail(String email, String url) {
         User user = userService.getByEmail(email);
@@ -35,14 +36,19 @@ public class EmailVerifier {
         }
 
         String token = generateToken();
-        LocalDateTime expiresAt = generateTokenExpiration();
+        LocalDateTime expiresAt = LocalDateTime.now().plus(tokenProperties.getEmailVerificationTokenLifespan());
 
         user.setEmailVerificationToken(token);
         user.setEmailVerificationTokenExpiresAt(expiresAt);
         userService.save(user);
 
-        String verificationUrl = buildVerificationUrl(url, token);
-        String emailBody = prepareEmailBody(verificationUrl);
+        String verificationUrl = url + (url.contains("?") ? "&" : "?") + "token=" + token;
+        String template = classpathFileService.getContent(EMAIL_TEMPLATE_PATH);
+        String expirationText = formatDuration(tokenProperties.getEmailVerificationTokenLifespan());
+
+        String emailBody = template
+                .replace("{{link}}", verificationUrl)
+                .replace("{{expiration}}", expirationText);
 
         emailService.send(email, EMAIL_SUBJECT, emailBody);
     }
@@ -52,48 +58,29 @@ public class EmailVerifier {
         if (user.getEmailVerificationTokenExpiresAt().isBefore(LocalDateTime.now())) {
             throw new BadRequestException("Action token expired");
         }
+
         user.setEmailVerified(true);
         user.setEmailVerificationToken(null);
         user.setEmailVerificationTokenExpiresAt(null);
         userService.save(user);
     }
 
-    private String buildVerificationUrl(String baseUrl, String token) {
-        return baseUrl + (baseUrl.contains("?") ? "&" : "?") + "token=" + token;
-    }
-
-    private String prepareEmailBody(String verificationUrl) {
-        String template = classpathFileService.getContent(EMAIL_TEMPLATE_PATH);
-        Duration lifespan = actionTokenLifespanProperties.getEmailVerificationTokenLifespan();
-
-        String expirationText = formatExpirationTime(lifespan);
-
-        return template
-                .replace("{{link}}", verificationUrl)
-                .replace("{{expiration}}", expirationText);
-    }
-
-    private String formatExpirationTime(Duration duration) {
+    private String formatDuration(Duration duration) {
         long hours = duration.toHours();
-        long remainingMinutes = duration.toMinutesPart();
+        long minutes = duration.toMinutesPart();
 
         if (hours > 0) {
-            return hours + (hours == 1 ? " hour" : " hours") +
-                    (remainingMinutes > 0 ? " and " + remainingMinutes +
-                            (remainingMinutes == 1 ? " minute" : " minutes") : "");
+            String hourText = hours + (hours == 1 ? " hour" : " hours");
+            return minutes > 0 ? hourText + " and " + minutes + (minutes == 1 ? " minute" : " minutes") : hourText;
         } else {
-            return duration.toMinutes() +
-                    (duration.toMinutes() == 1 ? " minute" : " minutes");
+            long totalMinutes = duration.toMinutes();
+            return totalMinutes + (totalMinutes == 1 ? " minute" : " minutes");
         }
     }
 
     private String generateToken() {
-        byte[] randomBytes = new byte[32];
+        byte[] randomBytes = new byte[TOKEN_BYTES_LENGTH];
         SECURE_RANDOM.nextBytes(randomBytes);
         return Base64.getUrlEncoder().withoutPadding().encodeToString(randomBytes);
-    }
-
-    private LocalDateTime generateTokenExpiration() {
-        return LocalDateTime.now().plus(actionTokenLifespanProperties.getEmailVerificationTokenLifespan());
     }
 }
