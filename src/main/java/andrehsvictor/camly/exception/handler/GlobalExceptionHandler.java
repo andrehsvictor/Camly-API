@@ -1,6 +1,7 @@
 package andrehsvictor.camly.exception.handler;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.UUID;
 import java.util.stream.Collectors;
 
@@ -39,11 +40,11 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             HttpStatusCode status,
             WebRequest request) {
 
-        var fieldErrors = ex.getBindingResult().getFieldErrors().stream()
+        List<FieldErrorDto> fieldErrors = ex.getBindingResult().getFieldErrors().stream()
                 .map(error -> new FieldErrorDto(error.getField(), error.getDefaultMessage()))
                 .collect(Collectors.toList());
 
-        var errorDto = ValidationErrorDto.builder()
+        ValidationErrorDto errorDto = ValidationErrorDto.builder()
                 .status(HttpStatus.BAD_REQUEST.value())
                 .message("Validation failed")
                 .requestId(UUID.randomUUID().toString())
@@ -53,6 +54,16 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
 
         log.error("Validation error: {}", ex.getMessage());
         return new ResponseEntity<>(errorDto, HttpStatus.BAD_REQUEST);
+    }
+
+    @Override
+    protected ResponseEntity<Object> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException ex,
+            HttpHeaders headers, HttpStatusCode status, WebRequest request) {
+        ErrorDto errorDto = createErrorDto(
+                HttpStatus.PAYLOAD_TOO_LARGE,
+                "File upload size exceeded the maximum allowed");
+        log.error("File upload size exceeded: {}", ex.getMessage());
+        return new ResponseEntity<>(errorDto, HttpStatus.PAYLOAD_TOO_LARGE);
     }
 
     @Override
@@ -98,14 +109,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
     @ExceptionHandler({ BadCredentialsException.class, AuthenticationException.class })
     public ResponseEntity<ErrorDto> handleAuthenticationException(Exception ex) {
         return createErrorResponse(HttpStatus.UNAUTHORIZED, ex.getMessage(), "Authentication failed");
-    }
-
-    @ExceptionHandler(MaxUploadSizeExceededException.class)
-    public ResponseEntity<ErrorDto> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException ex) {
-        return createErrorResponse(
-                HttpStatus.PAYLOAD_TOO_LARGE,
-                "File upload size exceeded the maximum allowed",
-                "File upload too large");
     }
 
     @ExceptionHandler(Exception.class)
