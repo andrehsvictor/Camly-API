@@ -15,6 +15,7 @@ import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
 import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 
 import andrehsvictor.camly.exception.BadRequestException;
+import andrehsvictor.camly.exception.ResourceConflictException;
 import andrehsvictor.camly.exception.UnauthorizedException;
 import andrehsvictor.camly.security.UserDetailsImpl;
 import andrehsvictor.camly.user.Role;
@@ -34,7 +35,7 @@ public class GoogleAuthenticationService {
         try {
             GoogleIdToken googleIdToken = googleIdTokenVerifier.verify(idToken);
             if (googleIdToken == null) {
-                throw new UnauthorizedException("Invalid Google ID token");
+                throw new BadRequestException("Failed to verify Google ID token");
             }
 
             GoogleIdToken.Payload payload = googleIdToken.getPayload();
@@ -42,7 +43,7 @@ public class GoogleAuthenticationService {
 
             return createAuthentication(user);
         } catch (GeneralSecurityException | IOException e) {
-            throw new UnauthorizedException("Failed to verify Google ID token: " + e.getMessage());
+            throw new UnauthorizedException("Failed to verify Google ID token");
         }
     }
 
@@ -56,7 +57,8 @@ public class GoogleAuthenticationService {
             User user = userService.getByEmail(email);
 
             if (user.getProvider() != UserProvider.GOOGLE) {
-                throw new BadRequestException("User already registered with a different provider");
+                throw new ResourceConflictException(
+                        "User with email '" + email + "'' is already registered with a different provider");
             }
 
             if (updateUserIfNeeded(user, emailVerified, pictureUrl)) {
