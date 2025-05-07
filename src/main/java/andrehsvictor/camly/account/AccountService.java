@@ -7,8 +7,11 @@ import org.springframework.stereotype.Service;
 
 import andrehsvictor.camly.account.dto.AccountDto;
 import andrehsvictor.camly.account.dto.CreateAccountDto;
+import andrehsvictor.camly.account.dto.PasswordResetDto;
+import andrehsvictor.camly.account.dto.SendActionEmailDto;
 import andrehsvictor.camly.account.dto.UpdateAccountDto;
 import andrehsvictor.camly.account.dto.UpdatePasswordDto;
+import andrehsvictor.camly.account.dto.VerifyEmailDto;
 import andrehsvictor.camly.exception.BadRequestException;
 import andrehsvictor.camly.exception.ResourceConflictException;
 import andrehsvictor.camly.jwt.JwtService;
@@ -25,6 +28,8 @@ public class AccountService {
     private final PasswordEncoder passwordEncoder;
     private final UserService userService;
     private final JwtService jwtService;
+    private final EmailVerifier emailVerifier;
+    private final PasswordResetter passwordResetter;
 
     public AccountDto get() {
         User user = getCurrentUser();
@@ -71,6 +76,23 @@ public class AccountService {
 
         user.setPassword(passwordEncoder.encode(newPassword));
         userService.save(user);
+    }
+
+    public void sendActionEmail(SendActionEmailDto sendActionEmailDto) {
+        switch (sendActionEmailDto.getAction()) {
+            case VERIFY_EMAIL -> emailVerifier.sendVerificationEmail(
+                    sendActionEmailDto.getEmail(), sendActionEmailDto.getUrl());
+            case RESET_PASSWORD -> passwordResetter.sendPasswordResetEmail(
+                    sendActionEmailDto.getEmail(), sendActionEmailDto.getUrl());
+        }
+    }
+
+    public void verifyEmail(VerifyEmailDto verifyEmailDto) {
+        emailVerifier.verify(verifyEmailDto.getToken());
+    }
+
+    public void resetPassword(PasswordResetDto passwordResetDto) {
+        passwordResetter.resetPassword(passwordResetDto.getToken(), passwordResetDto.getPassword());
     }
 
     private User getCurrentUser() {
