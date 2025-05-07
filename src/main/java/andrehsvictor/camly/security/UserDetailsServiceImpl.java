@@ -5,6 +5,8 @@ import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
 
+import andrehsvictor.camly.user.User;
+import andrehsvictor.camly.user.UserProvider;
 import andrehsvictor.camly.user.UserRepository;
 import lombok.RequiredArgsConstructor;
 
@@ -16,9 +18,9 @@ public class UserDetailsServiceImpl implements UserDetailsService {
 
     @Override
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
-        return userRepository.findByUsernameOrEmail(username)
-                .map(UserDetailsImpl::new)
+        User user = userRepository.findByUsernameOrEmailAndProvider(username, UserProvider.LOCAL)
                 .orElseThrow(() -> new UsernameNotFoundException("User not found with username or email: " + username));
+        return new UserDetailsImpl(user);
     }
 
 }

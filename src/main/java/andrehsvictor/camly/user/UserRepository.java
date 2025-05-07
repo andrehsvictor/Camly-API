@@ -8,11 +8,15 @@ import org.springframework.data.jpa.repository.Query;
 
 public interface UserRepository extends JpaRepository<User, UUID> {
 
-    @Query("SELECT u FROM User u WHERE u.username = :usernameOrEmail OR u.email = :usernameOrEmail")
-    Optional<User> findByUsernameOrEmail(String usernameOrEmail);
+    @Query("""
+            SELECT u FROM User u
+            WHERE (u.username = ?1 OR u.email = ?1)
+            AND u.provider = ?2
+                """)
+    Optional<User> findByUsernameOrEmailAndProvider(String usernameOrEmail, UserProvider provider);
 
     Optional<User> findByEmailVerificationToken(String token);
-    
+
     Optional<User> findByPasswordResetToken(String token);
 
     Optional<User> findByEmail(String email);
