@@ -26,7 +26,6 @@ import andrehsvictor.camly.exception.UnauthorizedException;
 import andrehsvictor.camly.exception.dto.ErrorDto;
 import andrehsvictor.camly.exception.dto.ValidationErrorDto;
 import andrehsvictor.camly.exception.dto.ValidationErrorDto.FieldErrorDto;
-import jakarta.servlet.http.HttpServletRequest;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
@@ -41,10 +40,7 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             WebRequest request) {
 
         var fieldErrors = ex.getBindingResult().getFieldErrors().stream()
-                .map(error -> FieldErrorDto.builder()
-                        .field(error.getField())
-                        .message(error.getDefaultMessage())
-                        .build())
+                .map(error -> new FieldErrorDto(error.getField(), error.getDefaultMessage()))
                 .collect(Collectors.toList());
 
         var errorDto = ValidationErrorDto.builder()
@@ -66,142 +62,77 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
             HttpStatusCode status,
             WebRequest request) {
 
-        var errorDto = ErrorDto.builder()
-                .status(HttpStatus.BAD_REQUEST.value())
-                .message("Missing required parameter: " + ex.getParameterName())
-                .requestId(UUID.randomUUID().toString())
-                .timestamp(LocalDateTime.now())
-                .build();
+        ErrorDto errorDto = createErrorDto(
+                HttpStatus.BAD_REQUEST,
+                "Missing required parameter: " + ex.getParameterName());
 
         log.error("Missing parameter: {}", ex.getParameterName());
         return new ResponseEntity<>(errorDto, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(BadRequestException.class)
-    public ResponseEntity<ErrorDto> handleBadRequestException(
-            BadRequestException ex,
-            HttpServletRequest request) {
-
-        var errorDto = ErrorDto.builder()
-                .status(HttpStatus.BAD_REQUEST.value())
-                .message(ex.getMessage())
-                .requestId(UUID.randomUUID().toString())
-                .timestamp(LocalDateTime.now())
-                .build();
-
-        log.error("Bad request: {}", ex.getMessage());
-        return new ResponseEntity<>(errorDto, HttpStatus.BAD_REQUEST);
+    public ResponseEntity<ErrorDto> handleBadRequestException(BadRequestException ex) {
+        return createErrorResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), "Bad request");
     }
 
     @ExceptionHandler(ForbiddenOperationException.class)
-    public ResponseEntity<ErrorDto> handleForbiddenOperationException(
-            ForbiddenOperationException ex,
-            HttpServletRequest request) {
-
-        var errorDto = ErrorDto.builder()
-                .status(HttpStatus.FORBIDDEN.value())
-                .message(ex.getMessage())
-                .requestId(UUID.randomUUID().toString())
-                .timestamp(LocalDateTime.now())
-                .build();
-
-        log.error("Forbidden operation: {}", ex.getMessage());
-        return new ResponseEntity<>(errorDto, HttpStatus.FORBIDDEN);
+    public ResponseEntity<ErrorDto> handleForbiddenOperationException(ForbiddenOperationException ex) {
+        return createErrorResponse(HttpStatus.FORBIDDEN, ex.getMessage(), "Forbidden operation");
     }
 
     @ExceptionHandler(ResourceConflictException.class)
-    public ResponseEntity<ErrorDto> handleResourceConflictException(
-            ResourceConflictException ex,
-            HttpServletRequest request) {
-
-        var errorDto = ErrorDto.builder()
-                .status(HttpStatus.CONFLICT.value())
-                .message(ex.getMessage())
-                .requestId(UUID.randomUUID().toString())
-                .timestamp(LocalDateTime.now())
-                .build();
-
-        log.error("Resource conflict: {}", ex.getMessage());
-        return new ResponseEntity<>(errorDto, HttpStatus.CONFLICT);
+    public ResponseEntity<ErrorDto> handleResourceConflictException(ResourceConflictException ex) {
+        return createErrorResponse(HttpStatus.CONFLICT, ex.getMessage(), "Resource conflict");
     }
 
     @ExceptionHandler(UnauthorizedException.class)
-    public ResponseEntity<ErrorDto> handleUnauthorizedException(
-            UnauthorizedException ex,
-            HttpServletRequest request) {
-
-        var errorDto = ErrorDto.builder()
-                .status(HttpStatus.UNAUTHORIZED.value())
-                .message(ex.getMessage())
-                .requestId(UUID.randomUUID().toString())
-                .timestamp(LocalDateTime.now())
-                .build();
-
-        log.error("Unauthorized access: {}", ex.getMessage());
-        return new ResponseEntity<>(errorDto, HttpStatus.UNAUTHORIZED);
+    public ResponseEntity<ErrorDto> handleUnauthorizedException(UnauthorizedException ex) {
+        return createErrorResponse(HttpStatus.UNAUTHORIZED, ex.getMessage(), "Unauthorized access");
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
-    public ResponseEntity<ErrorDto> handleResourceNotFoundException(
-            ResourceNotFoundException ex,
-            HttpServletRequest request) {
-
-        var errorDto = ErrorDto.builder()
-                .status(HttpStatus.NOT_FOUND.value())
-                .message(ex.getMessage())
-                .requestId(UUID.randomUUID().toString())
-                .timestamp(LocalDateTime.now())
-                .build();
-
-        log.error("Resource not found: {}", ex.getMessage());
-        return new ResponseEntity<>(errorDto, HttpStatus.NOT_FOUND);
+    public ResponseEntity<ErrorDto> handleResourceNotFoundException(ResourceNotFoundException ex) {
+        return createErrorResponse(HttpStatus.NOT_FOUND, ex.getMessage(), "Resource not found");
     }
 
     @ExceptionHandler({ BadCredentialsException.class, AuthenticationException.class })
-    public ResponseEntity<ErrorDto> handleAuthenticationException(
-            Exception ex,
-            HttpServletRequest request) {
-
-        var errorDto = ErrorDto.builder()
-                .status(HttpStatus.UNAUTHORIZED.value())
-                .message(ex.getMessage())
-                .requestId(UUID.randomUUID().toString())
-                .timestamp(LocalDateTime.now())
-                .build();
-
-        log.error("Authentication failed: {}", ex.getMessage());
-        return new ResponseEntity<>(errorDto, HttpStatus.UNAUTHORIZED);
+    public ResponseEntity<ErrorDto> handleAuthenticationException(Exception ex) {
+        return createErrorResponse(HttpStatus.UNAUTHORIZED, ex.getMessage(), "Authentication failed");
     }
 
     @ExceptionHandler(MaxUploadSizeExceededException.class)
-    public ResponseEntity<ErrorDto> handleMaxUploadSizeExceededException(
-            MaxUploadSizeExceededException ex,
-            HttpServletRequest request) {
-
-        var errorDto = ErrorDto.builder()
-                .status(HttpStatus.PAYLOAD_TOO_LARGE.value())
-                .message("File upload size exceeded the maximum allowed")
-                .requestId(UUID.randomUUID().toString())
-                .timestamp(LocalDateTime.now())
-                .build();
-
-        log.error("File upload too large: {}", ex.getMessage());
-        return new ResponseEntity<>(errorDto, HttpStatus.PAYLOAD_TOO_LARGE);
+    public ResponseEntity<ErrorDto> handleMaxUploadSizeExceededException(MaxUploadSizeExceededException ex) {
+        return createErrorResponse(
+                HttpStatus.PAYLOAD_TOO_LARGE,
+                "File upload size exceeded the maximum allowed",
+                "File upload too large");
     }
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorDto> handleGenericException(
-            Exception ex,
-            HttpServletRequest request) {
+    public ResponseEntity<ErrorDto> handleGenericException(Exception ex) {
+        log.error("Unexpected error", ex);
+        return createErrorResponse(
+                HttpStatus.INTERNAL_SERVER_ERROR,
+                "An unexpected error occurred",
+                null);
+    }
 
-        var errorDto = ErrorDto.builder()
-                .status(HttpStatus.INTERNAL_SERVER_ERROR.value())
-                .message("An unexpected error occurred")
+    private ResponseEntity<ErrorDto> createErrorResponse(HttpStatus status, String message, String logPrefix) {
+        ErrorDto errorDto = createErrorDto(status, message);
+
+        if (logPrefix != null) {
+            log.error("{}: {}", logPrefix, message);
+        }
+
+        return new ResponseEntity<>(errorDto, status);
+    }
+
+    private ErrorDto createErrorDto(HttpStatus status, String message) {
+        return ErrorDto.builder()
+                .status(status.value())
+                .message(message)
                 .requestId(UUID.randomUUID().toString())
                 .timestamp(LocalDateTime.now())
                 .build();
-
-        log.error("Unexpected error: ", ex);
-        return new ResponseEntity<>(errorDto, HttpStatus.INTERNAL_SERVER_ERROR);
     }
 }

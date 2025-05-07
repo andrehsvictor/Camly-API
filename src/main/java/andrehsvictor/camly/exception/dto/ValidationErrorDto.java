@@ -3,8 +3,10 @@ package andrehsvictor.camly.exception.dto;
 import java.time.LocalDateTime;
 import java.util.List;
 
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 @Data
 @Builder
@@ -17,6 +19,8 @@ public class ValidationErrorDto {
 
     @Data
     @Builder
+    @AllArgsConstructor
+    @NoArgsConstructor
     public static class FieldErrorDto {
         private String field;
         private String message;
