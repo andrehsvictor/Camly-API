@@ -2,7 +2,7 @@ spring:
   application:
     name: camly
   profiles:
-    active: ${spring.profiles.active:dev}
+    active: @spring.profiles.active@
   jpa:
     open-in-view: false
     properties:

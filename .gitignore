@@ -37,4 +37,5 @@ build/
 *.log
 *.pem
 keys/
+certs/
 application-dev.yml
