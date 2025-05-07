@@ -29,8 +29,8 @@ public class UserService {
                         "Action token not found"));
     }
 
-    public User getByPasswordResetToken(String token) {
-        return userRepository.findByPasswordResetToken(token)
+    public User getByResetPasswordToken(String token) {
+        return userRepository.findByResetPasswordToken(token)
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Action token not found"));
     }
