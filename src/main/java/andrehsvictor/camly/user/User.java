@@ -125,4 +125,34 @@ public class User implements Serializable {
         this.updatedAt = LocalDateTime.now();
     }
 
+    public void incrementPostCount() {
+        this.postCount++;
+    }
+
+    public void decrementPostCount() {
+        if (this.postCount > 0) {
+            this.postCount--;
+        }
+    }
+
+    public void incrementFollowerCount() {
+        this.followerCount++;
+    }
+
+    public void decrementFollowerCount() {
+        if (this.followerCount > 0) {
+            this.followerCount--;
+        }
+    }
+
+    public void incrementFollowingCount() {
+        this.followingCount++;
+    }
+
+    public void decrementFollowingCount() {
+        if (this.followingCount > 0) {
+            this.followingCount--;
+        }
+    }
+
 }

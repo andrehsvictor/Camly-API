@@ -15,6 +15,7 @@ import andrehsvictor.camly.exception.ForbiddenOperationException;
 import andrehsvictor.camly.exception.ResourceNotFoundException;
 import andrehsvictor.camly.jwt.JwtService;
 import andrehsvictor.camly.user.dto.UserDto;
+import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -101,13 +102,17 @@ public class UserService {
         userRepository.deleteById(id);
     }
 
+    @Transactional
     @Caching(evict = {
             @CacheEvict(key = "'userById_' + #followedId"),
             @CacheEvict(key = "'userById_' + @jwtService.getCurrentUserId()"),
-            @CacheEvict(key = "'filters_*'", allEntries = true)
+            @CacheEvict(key = "'filters_*'", allEntries = true),
+            @CacheEvict(key = "'followers_' + #followedId", allEntries = true),
+            @CacheEvict(key = "'following_' + @jwtService.getCurrentUserId()", allEntries = true)
     })
     public void follow(UUID followedId) {
         UUID followerId = jwtService.getCurrentUserId();
+
         if (followerId.equals(followedId)) {
             throw new ForbiddenOperationException("You cannot follow yourself");
         }
@@ -115,16 +120,16 @@ public class UserService {
         User followed = getById(followedId);
         User follower = getById(followerId);
 
-        boolean isFollowing = followed.getFollowers().contains(follower);
+        boolean wasFollowing = follower.getFollowing().contains(followed);
 
-        if (isFollowing) {
-            followed.getFollowers().remove(follower);
-            followed.setFollowerCount(Math.max(0, followed.getFollowerCount() - 1));
-            follower.setFollowingCount(Math.max(0, follower.getFollowingCount() - 1));
+        if (wasFollowing) {
+            follower.getFollowing().remove(followed);
+            followed.decrementFollowerCount();
+            follower.decrementFollowingCount();
         } else {
-            followed.getFollowers().add(follower);
-            followed.setFollowerCount(followed.getFollowerCount() + 1);
-            follower.setFollowingCount(follower.getFollowingCount() + 1);
+            follower.getFollowing().add(followed);
+            followed.incrementFollowerCount();
+            follower.incrementFollowingCount();
         }
 
         userRepository.saveAll(List.of(follower, followed));
