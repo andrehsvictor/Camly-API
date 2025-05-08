@@ -10,7 +10,7 @@ import org.springframework.data.jpa.repository.Query;
 
 public interface PostRepository extends JpaRepository<Post, UUID> {
 
-    Page<Post> findAllByOrderByEngagementRateDescAndCreatedAtBetween(
+    Page<Post> findAllByCreatedAtBetweenOrderByEngagementRateDesc(
             LocalDateTime startDate,
             LocalDateTime endDate,
             Pageable pageable);
@@ -34,27 +34,25 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
     @Query("""
             SELECT
             COUNT(p.id) AS postCount,
-            SUM(p.likeCount) AS totalLikes,
-            SUM(p.commentCount) AS totalComments,
-            AVG(p.likeCount) AS averageLikes,
-            AVG(p.commentCount) AS averageComments
+            COALESCE(SUM(p.likeCount), 0) AS totalLikes,
+            COALESCE(AVG(p.likeCount), 0) AS averageLikes,
+            COALESCE(MAX(p.likeCount), 0) AS maxLikes,
+            COALESCE(MIN(CASE WHEN p.likeCount > 0 THEN p.likeCount ELSE NULL END), 0) AS minLikes,
+            COALESCE((SUM(p.likeCount) * 1.0) / NULLIF(COUNT(p.id), 0), 0) AS engagementRate,
+            MAX(p.createdAt) AS lastPostDate
             FROM Post p
             WHERE p.user.id = :userId
-                """)
+            """)
     PostStats getPostStatsByUserId(UUID userId);
 
 }
 
 interface PostStats {
-
     Long getPostCount();
-
     Long getTotalLikes();
-
-    Long getTotalComments();
-
     Double getAverageLikes();
-
-    Double getAverageComments();
-
+    Long getMaxLikes();
+    Long getMinLikes();
+    Double getEngagementRate();
+    LocalDateTime getLastPostDate();
 }
