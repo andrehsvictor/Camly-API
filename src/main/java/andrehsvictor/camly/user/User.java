@@ -6,6 +6,7 @@ import java.util.HashSet;
 import java.util.Set;
 import java.util.UUID;
 
+import andrehsvictor.camly.post.Post;
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
 import jakarta.persistence.EnumType;
@@ -119,6 +120,10 @@ public class User implements Serializable {
     @Column(name = "role", nullable = false)
     @Enumerated(EnumType.STRING)
     private Role role = Role.USER;
+
+    @Builder.Default
+    @ManyToMany(mappedBy = "likes")
+    private Set<Post> likedPosts = new HashSet<>();
 
     @PreUpdate
     void preUpdate() {
