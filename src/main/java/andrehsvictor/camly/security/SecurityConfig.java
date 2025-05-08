@@ -62,6 +62,7 @@ public class SecurityConfig {
             "/api/v1/token/revoke",
             "/api/v1/token",
             "/api/v1/token/google",
+            "/api/v1/images",
     };
 
     @Bean
