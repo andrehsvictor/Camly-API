@@ -1,5 +1,7 @@
 package andrehsvictor.camly.minio;
 
+import java.util.Map;
+
 import org.springframework.boot.context.properties.ConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 
@@ -12,9 +14,8 @@ import lombok.Setter;
 @ConfigurationProperties(prefix = "camly.minio")
 public class MinioProperties {
 
-    private String adminUsername;
-    private String adminPassword;
+    private Map<String, String> admin;
     private String endpoint;
-    private String bucketName;
+    private Map<String, String> bucket;
 
 }

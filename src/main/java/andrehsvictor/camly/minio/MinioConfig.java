@@ -21,7 +21,8 @@ public class MinioConfig {
     MinioClient minioClient() {
         MinioClient minioClient = MinioClient.builder()
                 .endpoint(minioProperties.getEndpoint())
-                .credentials(minioProperties.getAdminUsername(), minioProperties.getAdminPassword())
+                .credentials(minioProperties.getAdmin().get("username"),
+                        minioProperties.getAdmin().get("password"))
                 .build();
 
         setupBucket(minioClient);
@@ -33,12 +34,12 @@ public class MinioConfig {
     private void setupBucket(MinioClient minioClient) {
         try {
             BucketExistsArgs bucketExistsArgs = BucketExistsArgs.builder()
-                    .bucket(minioProperties.getBucketName())
+                    .bucket(minioProperties.getBucket().get("name"))
                     .build();
 
             if (!minioClient.bucketExists(bucketExistsArgs)) {
                 MakeBucketArgs makeBucketArgs = MakeBucketArgs.builder()
-                        .bucket(minioProperties.getBucketName())
+                        .bucket(minioProperties.getBucket().get("name"))
                         .build();
                 minioClient.makeBucket(makeBucketArgs);
             }
@@ -51,7 +52,7 @@ public class MinioConfig {
         try {
             String bucketPolicy = classpathFileService.getContent("bucket-policy.json");
             SetBucketPolicyArgs setBucketPolicyArgs = SetBucketPolicyArgs.builder()
-                    .bucket(minioProperties.getBucketName())
+                    .bucket(minioProperties.getBucket().get("name"))
                     .config(bucketPolicy)
                     .build();
             minioClient.setBucketPolicy(setBucketPolicyArgs);

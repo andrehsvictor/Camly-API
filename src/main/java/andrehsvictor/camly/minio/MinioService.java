@@ -19,13 +19,13 @@ public class MinioService {
             String objectName = generateObjectName(file.getOriginalFilename());
 
             minioClient.putObject(PutObjectArgs.builder()
-                    .bucket(minioProperties.getBucketName())
+                    .bucket(minioProperties.getBucket().get("name"))
                     .object(objectName)
                     .stream(file.getInputStream(), file.getSize(), -1)
                     .contentType(file.getContentType())
                     .build());
 
-            return String.format("%s/%s/%s", minioProperties.getEndpoint(), minioProperties.getBucketName(),
+            return String.format("%s/%s/%s", minioProperties.getEndpoint(), minioProperties.getBucket().get("name"),
                     objectName);
         } catch (Exception e) {
             throw new RuntimeException("Failed to upload file", e);
