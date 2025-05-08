@@ -2,6 +2,8 @@ package andrehsvictor.camly.user;
 
 import java.io.Serializable;
 import java.time.LocalDateTime;
+import java.util.HashSet;
+import java.util.Set;
 import java.util.UUID;
 
 import jakarta.persistence.Column;
@@ -11,6 +13,9 @@ import jakarta.persistence.Enumerated;
 import jakarta.persistence.GeneratedValue;
 import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.JoinTable;
+import jakarta.persistence.ManyToMany;
 import jakarta.persistence.PreUpdate;
 import jakarta.persistence.Table;
 import lombok.AllArgsConstructor;
@@ -29,7 +34,7 @@ import lombok.ToString;
 @NoArgsConstructor
 @AllArgsConstructor
 @EqualsAndHashCode(of = { "id", "username", "email" })
-@ToString(exclude = { "password", "emailVerificationToken", "resetPasswordToken" })
+@ToString(exclude = { "password", "emailVerificationToken", "resetPasswordToken", "followers", "following" })
 public class User implements Serializable {
 
     private static final long serialVersionUID = -8607404488005893145L;
@@ -92,6 +97,15 @@ public class User implements Serializable {
 
     @Column(name = "reset_password_token_expires_at")
     private LocalDateTime resetPasswordTokenExpiresAt;
+
+    @Builder.Default
+    @JoinTable(name = "follows", joinColumns = @JoinColumn(name = "follower_id"), inverseJoinColumns = @JoinColumn(name = "following_id"))
+    @ManyToMany
+    private Set<User> followers = new HashSet<>();
+
+    @Builder.Default
+    @ManyToMany(mappedBy = "followers")
+    private Set<User> following = new HashSet<>();
 
     @Builder.Default
     @Column(name = "created_at", updatable = false, nullable = false)

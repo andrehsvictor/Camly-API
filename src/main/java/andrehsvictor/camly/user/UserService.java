@@ -2,9 +2,12 @@ package andrehsvictor.camly.user;
 
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import andrehsvictor.camly.exception.ResourceNotFoundException;
+import andrehsvictor.camly.user.dto.UserDto;
 import lombok.RequiredArgsConstructor;
 
 @Service
@@ -12,6 +15,18 @@ import lombok.RequiredArgsConstructor;
 public class UserService {
 
     private final UserRepository userRepository;
+    private final UserMapper userMapper;
+
+    public UserDto toDto(User user) {
+        return userMapper.userToUserDto(user);
+    }
+
+    public Page<User> getAllWithFilters(
+            String query,
+            String username,
+            Pageable pageable) {
+        return userRepository.findAllWithFilters(query, username, pageable);
+    }
 
     public User getById(UUID id) {
         return userRepository.findById(id)
