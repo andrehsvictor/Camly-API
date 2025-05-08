@@ -45,7 +45,7 @@ public class PostService {
 
     @Cacheable(key = "'engagement_' + #startDate + '_' + #endDate + '_' + #pageable.pageNumber + '_' + #pageable.pageSize")
     public Page<Post> getAllByEngagementRate(LocalDateTime startDate, LocalDateTime endDate, Pageable pageable) {
-        return postRepository.findAllByOrderByEngagementRateDescAndCreatedAtBetween(startDate, endDate, pageable);
+        return postRepository.findAllByCreatedAtBetweenOrderByEngagementRateDesc(startDate, endDate, pageable);
     }
 
     @Cacheable(key = "'userPosts_' + #userId + '_' + #pageable.pageNumber + '_' + #pageable.pageSize")
