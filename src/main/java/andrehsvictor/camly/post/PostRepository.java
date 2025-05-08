@@ -6,8 +6,6 @@ import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
-import org.springframework.data.jpa.repository.Modifying;
-import org.springframework.data.jpa.repository.NativeQuery;
 import org.springframework.data.jpa.repository.Query;
 
 public interface PostRepository extends JpaRepository<Post, UUID> {
@@ -30,16 +28,8 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
 
     Page<Post> findAllByUserId(UUID userId, Pageable pageable);
 
-    @Modifying
-    @NativeQuery("INSERT INTO likes (post_id, user_id) VALUES (:postId, :userId)")
-    boolean like(UUID postId, UUID userId);
-
-    @Modifying
-    @NativeQuery("DELETE FROM likes WHERE post_id = :postId AND user_id = :userId")
-    boolean unlike(UUID postId, UUID userId);
-
-    @NativeQuery("SELECT COUNT(*) FROM likes WHERE post_id = :postId AND user_id = :userId")
-    boolean isLikedByUser(UUID postId, UUID userId);
+    @Query("SELECT COUNT(p.id) > 0 FROM Post p WHERE p.user.id = :userId AND p.id = :postId")
+    boolean existsLikeByUserIdAndPostId(UUID userId, UUID postId);
 
     @Query("""
             SELECT
@@ -51,7 +41,6 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
             FROM Post p
             WHERE p.user.id = :userId
                 """)
-
     PostStats getPostStatsByUserId(UUID userId);
 
 }

@@ -18,6 +18,7 @@ import andrehsvictor.camly.jwt.JwtService;
 import andrehsvictor.camly.post.dto.CreatePostDto;
 import andrehsvictor.camly.post.dto.PostDto;
 import andrehsvictor.camly.post.dto.UpdatePostDto;
+import andrehsvictor.camly.user.User;
 import andrehsvictor.camly.user.UserService;
 import lombok.RequiredArgsConstructor;
 
@@ -60,7 +61,8 @@ public class PostService {
 
     @Cacheable(key = "'liked_' + #postId + '_' + @jwtService.getCurrentUserId()")
     public boolean isLiked(UUID postId) {
-        return postRepository.isLikedByUser(postId, jwtService.getCurrentUserId());
+        UUID userId = jwtService.getCurrentUserId();
+        return postRepository.existsLikeByUserIdAndPostId(userId, postId);
     }
 
     public PostDto toDto(Post post) {
@@ -73,22 +75,20 @@ public class PostService {
             @CacheEvict(key = "'post_' + #postId"),
             @CacheEvict(key = "'stats_' + @jwtService.getCurrentUserId()")
     })
-    public boolean like(UUID postId) {
+    public void like(UUID postId) {
         UUID userId = jwtService.getCurrentUserId();
         Post post = getById(postId);
-        boolean result;
-
-        if (postRepository.isLikedByUser(postId, userId)) {
-            post.decrementLikeCount();
-            result = postRepository.unlike(postId, userId);
-        } else {
+        boolean isLiked = postRepository.existsLikeByUserIdAndPostId(userId, postId);
+        if (isLiked) {
+            post.getLikes().removeIf(like -> like.getId().equals(userId));
             post.incrementLikeCount();
-            result = postRepository.like(postId, userId);
+        } else {
+            User user = userService.getById(userId);
+            post.getLikes().add(user);
+            post.incrementLikeCount();
         }
-
         calculateEngagementRate(post);
         postRepository.save(post);
-        return result;
     }
 
     @Transactional
