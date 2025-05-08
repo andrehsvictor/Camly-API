@@ -18,7 +18,6 @@ import andrehsvictor.camly.jwt.JwtService;
 import andrehsvictor.camly.post.dto.CreatePostDto;
 import andrehsvictor.camly.post.dto.PostDto;
 import andrehsvictor.camly.post.dto.UpdatePostDto;
-import andrehsvictor.camly.user.User;
 import andrehsvictor.camly.user.UserService;
 import lombok.RequiredArgsConstructor;
 
@@ -32,6 +31,12 @@ public class PostService {
     private final PostMapper postMapper;
     private final JwtService jwtService;
     private final UserService userService;
+
+    @Cacheable(key = "'post_' + #id")
+    public Post getById(UUID id) {
+        return postRepository.findById(id)
+                .orElseThrow(() -> new ResourceNotFoundException("Post", "ID", id));
+    }
 
     @Cacheable(key = "'filters_' + #query + '_' + #username + '_' + #pageable.pageNumber + '_' + #pageable.pageSize")
     public Page<Post> getAllWithFilters(String query, String username, Pageable pageable) {
@@ -48,12 +53,6 @@ public class PostService {
         return postRepository.findAllByUserId(userId, pageable);
     }
 
-    @Cacheable(key = "'post_' + #id")
-    public Post getById(UUID id) {
-        return postRepository.findById(id)
-                .orElseThrow(() -> new ResourceNotFoundException("Post", "ID", id));
-    }
-
     @Cacheable(key = "'stats_' + @jwtService.getCurrentUserId()")
     public PostStats getPostStatsByCurrentUser() {
         return postRepository.getPostStatsByUserId(jwtService.getCurrentUserId());
@@ -61,12 +60,7 @@ public class PostService {
 
     @Cacheable(key = "'liked_' + #postId + '_' + @jwtService.getCurrentUserId()")
     public boolean isLiked(UUID postId) {
-        UUID userId = jwtService.getCurrentUserId();
-        return postRepository.existsLikeByUserIdAndPostId(userId, postId);
-    }
-
-    public PostDto toDto(Post post) {
-        return postMapper.postToPostDto(post);
+        return postRepository.existsLikeByUserIdAndPostId(jwtService.getCurrentUserId(), postId);
     }
 
     @Transactional
@@ -79,14 +73,15 @@ public class PostService {
         UUID userId = jwtService.getCurrentUserId();
         Post post = getById(postId);
         boolean isLiked = postRepository.existsLikeByUserIdAndPostId(userId, postId);
+
         if (isLiked) {
             post.getLikes().removeIf(like -> like.getId().equals(userId));
-            post.incrementLikeCount();
+            post.decrementLikeCount();
         } else {
-            User user = userService.getById(userId);
-            post.getLikes().add(user);
+            post.getLikes().add(userService.getById(userId));
             post.incrementLikeCount();
         }
+
         calculateEngagementRate(post);
         postRepository.save(post);
     }
@@ -101,6 +96,7 @@ public class PostService {
     public Post create(CreatePostDto createPostDto) {
         Post post = postMapper.createPostDtoToPost(createPostDto);
         post.setUser(userService.getById(jwtService.getCurrentUserId()));
+
         return postRepository.save(post);
     }
 
@@ -113,7 +109,8 @@ public class PostService {
     })
     public Post update(UUID id, UpdatePostDto updatePostDto) {
         Post post = getById(id);
-        validatePostOwnership(post);
+        validateOwnership(post);
+
         postMapper.updatePostFromUpdatePostDto(updatePostDto, post);
         return postRepository.save(post);
     }
@@ -129,15 +126,25 @@ public class PostService {
     })
     public void delete(UUID id) {
         Post post = getById(id);
-        validatePostOwnership(post);
+        validateOwnership(post);
+
         postRepository.delete(post);
     }
 
-    private void calculateEngagementRate(Post post) {
-        post.setEngagementRate((float) post.getLikeCount() / (float) post.getUser().getFollowerCount());
+    public PostDto toDto(Post post) {
+        return postMapper.postToPostDto(post);
     }
 
-    private void validatePostOwnership(Post post) {
+    private void calculateEngagementRate(Post post) {
+        int followerCount = post.getUser().getFollowerCount();
+        float engagementRate = followerCount > 0
+                ? (float) post.getLikeCount() / followerCount
+                : post.getLikeCount();
+
+        post.setEngagementRate(engagementRate);
+    }
+
+    private void validateOwnership(Post post) {
         if (!post.getUserId().equals(jwtService.getCurrentUserId())) {
             throw new ForbiddenOperationException("You are not the owner of this post");
         }

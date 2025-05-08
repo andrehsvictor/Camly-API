@@ -10,34 +10,23 @@ import org.springframework.cache.annotation.Caching;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import andrehsvictor.camly.exception.ForbiddenOperationException;
 import andrehsvictor.camly.exception.ResourceNotFoundException;
 import andrehsvictor.camly.jwt.JwtService;
 import andrehsvictor.camly.user.dto.UserDto;
-import jakarta.transaction.Transactional;
 import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
 @CacheConfig(cacheNames = "users")
+@Transactional(readOnly = true)
 public class UserService {
 
     private final UserRepository userRepository;
     private final UserMapper userMapper;
     private final JwtService jwtService;
-
-    public UserDto toDto(User user) {
-        return userMapper.userToUserDto(user);
-    }
-
-    @Cacheable(key = "'filters_' + #query + '_' + #username + '_' + #pageable.pageNumber + '_' + #pageable.pageSize")
-    public Page<User> getAllWithFilters(
-            String query,
-            String username,
-            Pageable pageable) {
-        return userRepository.findAllWithFilters(query, username, pageable);
-    }
 
     @Cacheable(key = "'userById_' + #id")
     public User getById(UUID id) {
@@ -54,33 +43,12 @@ public class UserService {
     @Cacheable(key = "'userByProviderId_' + #providerId")
     public User getByProviderId(String providerId) {
         return userRepository.findByProviderId(providerId)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "User", "provider ID", providerId));
+                .orElseThrow(() -> new ResourceNotFoundException("User", "provider ID", providerId));
     }
 
-    @Cacheable(key = "'userByEmailVerificationToken_' + #token")
-    public User getByEmailVerificationToken(String token) {
-        return userRepository.findByEmailVerificationToken(token)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Action token not found"));
-    }
-
-    @Cacheable(key = "'userByResetPasswordToken_' + #token")
-    public User getByResetPasswordToken(String token) {
-        return userRepository.findByResetPasswordToken(token)
-                .orElseThrow(() -> new ResourceNotFoundException(
-                        "Action token not found"));
-    }
-
-    @Caching(evict = {
-            @CacheEvict(key = "'userById_' + #user.id", condition = "#user.id != null"),
-            @CacheEvict(key = "'userByEmail_' + #user.email", condition = "#user.email != null"),
-            @CacheEvict(key = "'userByProviderId_' + #user.providerId", condition = "#user.providerId != null"),
-            @CacheEvict(key = "'existsByUsername_' + #user.username", condition = "#user.username != null"),
-            @CacheEvict(key = "'existsByEmail_' + #user.email", condition = "#user.email != null")
-    })
-    public User save(User user) {
-        return userRepository.save(user);
+    @Cacheable(key = "'filters_' + #query + '_' + #username + '_' + #pageable.pageNumber + '_' + #pageable.pageSize")
+    public Page<User> getAllWithFilters(String query, String username, Pageable pageable) {
+        return userRepository.findAllWithFilters(query, username, pageable);
     }
 
     @Cacheable(key = "'existsByUsername_' + #username")
@@ -93,6 +61,33 @@ public class UserService {
         return userRepository.existsByEmail(email);
     }
 
+    @Cacheable(key = "'userByToken_' + #token")
+    public User getByToken(String token, TokenType type) {
+        return switch (type) {
+            case EMAIL_VERIFICATION -> userRepository.findByEmailVerificationToken(token)
+                    .orElseThrow(() -> new ResourceNotFoundException("Email verification token not found"));
+            case PASSWORD_RESET -> userRepository.findByResetPasswordToken(token)
+                    .orElseThrow(() -> new ResourceNotFoundException("Password reset token not found"));
+        };
+    }
+
+    public UserDto toDto(User user) {
+        return userMapper.userToUserDto(user);
+    }
+
+    @Transactional
+    @Caching(evict = {
+            @CacheEvict(key = "'userById_' + #user.id", condition = "#user.id != null"),
+            @CacheEvict(key = "'userByEmail_' + #user.email", condition = "#user.email != null"),
+            @CacheEvict(key = "'userByProviderId_' + #user.providerId", condition = "#user.providerId != null"),
+            @CacheEvict(key = "'existsByUsername_' + #user.username", condition = "#user.username != null"),
+            @CacheEvict(key = "'existsByEmail_' + #user.email", condition = "#user.email != null")
+    })
+    public User save(User user) {
+        return userRepository.save(user);
+    }
+
+    @Transactional
     @Caching(evict = {
             @CacheEvict(key = "'userById_' + #id"),
             @CacheEvict(key = "'filters_*'", allEntries = true),
@@ -106,11 +101,9 @@ public class UserService {
     @Caching(evict = {
             @CacheEvict(key = "'userById_' + #followedId"),
             @CacheEvict(key = "'userById_' + @jwtService.getCurrentUserId()"),
-            @CacheEvict(key = "'filters_*'", allEntries = true),
-            @CacheEvict(key = "'followers_' + #followedId", allEntries = true),
-            @CacheEvict(key = "'following_' + @jwtService.getCurrentUserId()", allEntries = true)
+            @CacheEvict(key = "'filters_*'", allEntries = true)
     })
-    public void follow(UUID followedId) {
+    public boolean follow(UUID followedId) {
         UUID followerId = jwtService.getCurrentUserId();
 
         if (followerId.equals(followedId)) {
@@ -120,18 +113,28 @@ public class UserService {
         User followed = getById(followedId);
         User follower = getById(followerId);
 
-        boolean wasFollowing = follower.getFollowing().contains(followed);
+        boolean isAlreadyFollowing = follower.getFollowing().contains(followed);
 
-        if (wasFollowing) {
+        if (isAlreadyFollowing) {
             follower.getFollowing().remove(followed);
-            followed.decrementFollowerCount();
-            follower.decrementFollowingCount();
+            updateFollowCounts(followed, follower, -1);
         } else {
             follower.getFollowing().add(followed);
-            followed.incrementFollowerCount();
-            follower.incrementFollowingCount();
+            updateFollowCounts(followed, follower, 1);
         }
 
         userRepository.saveAll(List.of(follower, followed));
+        return !isAlreadyFollowing;
     }
+
+    private void updateFollowCounts(User followed, User follower, int delta) {
+        if (delta > 0) {
+            followed.setFollowerCount(followed.getFollowerCount() + 1);
+            follower.setFollowingCount(follower.getFollowingCount() + 1);
+        } else {
+            followed.setFollowerCount(Math.max(0, followed.getFollowerCount() - 1));
+            follower.setFollowingCount(Math.max(0, follower.getFollowingCount() - 1));
+        }
+    }
+
 }

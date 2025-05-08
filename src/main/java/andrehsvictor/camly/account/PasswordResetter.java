@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 
 import andrehsvictor.camly.email.EmailService;
 import andrehsvictor.camly.exception.BadRequestException;
+import andrehsvictor.camly.user.TokenType;
 import andrehsvictor.camly.user.User;
 import andrehsvictor.camly.user.UserService;
 import andrehsvictor.camly.util.ClasspathFileService;
@@ -52,7 +53,7 @@ public class PasswordResetter {
     }
 
     public void resetPassword(String token, String newPassword) {
-        User user = userService.getByResetPasswordToken(token);
+        User user = userService.getByToken(token, TokenType.PASSWORD_RESET);
         if (user.getResetPasswordTokenExpiresAt().isBefore(LocalDateTime.now())) {
             throw new BadRequestException("Action token expired");
         }

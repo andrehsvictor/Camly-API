@@ -10,6 +10,7 @@ import org.springframework.stereotype.Service;
 import andrehsvictor.camly.email.EmailService;
 import andrehsvictor.camly.exception.BadRequestException;
 import andrehsvictor.camly.exception.ResourceConflictException;
+import andrehsvictor.camly.user.TokenType;
 import andrehsvictor.camly.user.User;
 import andrehsvictor.camly.user.UserService;
 import andrehsvictor.camly.util.ClasspathFileService;
@@ -54,11 +55,10 @@ public class EmailVerifier {
     }
 
     public void verify(String token) {
-        User user = userService.getByEmailVerificationToken(token);
+        User user = userService.getByToken(token, TokenType.EMAIL_VERIFICATION);
         if (user.getEmailVerificationTokenExpiresAt().isBefore(LocalDateTime.now())) {
             throw new BadRequestException("Action token expired");
         }
-
         user.setEmailVerified(true);
         user.setEmailVerificationToken(null);
         user.setEmailVerificationTokenExpiresAt(null);
