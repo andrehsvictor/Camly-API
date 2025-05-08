@@ -46,4 +46,8 @@ public interface UserRepository extends JpaRepository<User, UUID> {
             String username,
             Pageable pageable);
 
+    Page<User> findAllFollowersByUserId(UUID userId, Pageable pageable);
+
+    Page<User> findAllFollowingByUserId(UUID userId, Pageable pageable);
+
 }

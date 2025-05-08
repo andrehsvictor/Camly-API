@@ -20,12 +20,11 @@ public class UserController {
 
     @GetMapping("/api/v1/users")
     public Page<UserDto> getAll(
-        @RequestParam(required = false, name = "q") String query,
-        @RequestParam(required = false, name = "username") String username,
-        Pageable pageable
-    ) {
+            @RequestParam(required = false, name = "q") String query,
+            @RequestParam(required = false) String username,
+            Pageable pageable) {
         return userService.getAllWithFilters(query, username, pageable)
-            .map(userService::toDto);
+                .map(userService::toDto);
     }
 
     @GetMapping("/api/v1/users/{id}")
