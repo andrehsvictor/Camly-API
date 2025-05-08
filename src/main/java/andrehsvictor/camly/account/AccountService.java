@@ -1,5 +1,9 @@
 package andrehsvictor.camly.account;
 
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.cache.annotation.Caching;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 
@@ -20,6 +24,7 @@ import lombok.RequiredArgsConstructor;
 
 @Service
 @RequiredArgsConstructor
+@CacheConfig(cacheNames = "accounts")
 public class AccountService {
 
     private final AccountMapper accountMapper;
@@ -29,10 +34,15 @@ public class AccountService {
     private final EmailVerifier emailVerifier;
     private final PasswordResetter passwordResetter;
 
+    @Cacheable(key = "#root.method.name + '_' + @jwtService.getCurrentUserId()")
     public AccountDto get() {
         return accountMapper.userToAccountDto(getCurrentUser());
     }
 
+    @Caching(evict = {
+            @CacheEvict(key = "'get_' + #result.id"),
+            @CacheEvict(key = "'userById_' + #result.id", cacheNames = "users")
+    })
     public AccountDto create(CreateAccountDto createAccountDto) {
         validateUniqueFields(createAccountDto.getUsername(), createAccountDto.getEmail());
 
@@ -43,6 +53,10 @@ public class AccountService {
         return accountMapper.userToAccountDto(user);
     }
 
+    @Caching(evict = {
+            @CacheEvict(key = "'get_' + @jwtService.getCurrentUserId()"),
+            @CacheEvict(key = "'userById_' + @jwtService.getCurrentUserId()", cacheNames = "users")
+    })
     public AccountDto update(UpdateAccountDto updateAccountDto) {
         User user = getCurrentUser();
         String newEmail = updateAccountDto.getEmail();
@@ -56,10 +70,20 @@ public class AccountService {
         return accountMapper.userToAccountDto(user);
     }
 
+    @Caching(evict = {
+            @CacheEvict(key = "'get_' + @jwtService.getCurrentUserId()"),
+            @CacheEvict(key = "'userById_' + @jwtService.getCurrentUserId()", cacheNames = "users"),
+            @CacheEvict(key = "'existsByUsername_' + #username", cacheNames = "users"),
+            @CacheEvict(key = "'existsByEmail_' + #email", cacheNames = "users")
+    })
     public void delete() {
         userService.deleteById(jwtService.getCurrentUserId());
     }
 
+    @Caching(evict = {
+            @CacheEvict(key = "'get_' + @jwtService.getCurrentUserId()"),
+            @CacheEvict(key = "'userById_' + @jwtService.getCurrentUserId()", cacheNames = "users")
+    })
     public void updatePassword(UpdatePasswordDto updatePasswordDto) {
         User user = getCurrentUser();
         String oldPassword = updatePasswordDto.getOldPassword();
@@ -82,16 +106,25 @@ public class AccountService {
         }
     }
 
+    @Caching(evict = {
+            @CacheEvict(allEntries = true),
+            @CacheEvict(cacheNames = "users", allEntries = true)
+    })
     public void verifyEmail(VerifyEmailDto verifyEmailDto) {
         emailVerifier.verify(verifyEmailDto.getToken());
     }
 
+    @Caching(evict = {
+            @CacheEvict(allEntries = true),
+            @CacheEvict(cacheNames = "users", allEntries = true)
+    })
     public void resetPassword(PasswordResetDto passwordResetDto) {
         passwordResetter.resetPassword(
                 passwordResetDto.getToken(),
                 passwordResetDto.getPassword());
     }
 
+    @Cacheable(cacheNames = "users", key = "'userById_' + @jwtService.getCurrentUserId()")
     private User getCurrentUser() {
         return userService.getById(jwtService.getCurrentUserId());
     }
