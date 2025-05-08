@@ -4,6 +4,7 @@ import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 import org.mapstruct.MappingTarget;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.context.annotation.Lazy;
 
 import andrehsvictor.camly.post.dto.CreatePostDto;
 import andrehsvictor.camly.post.dto.PostDto;
@@ -12,6 +13,7 @@ import andrehsvictor.camly.post.dto.UpdatePostDto;
 @Mapper(componentModel = "spring")
 public abstract class PostMapper {
 
+    @Lazy
     @Autowired
     protected PostService postService;
 
