@@ -133,35 +133,8 @@ public class PostService {
         postRepository.delete(post);
     }
 
-    @Transactional
-    @Caching(evict = {
-            @CacheEvict(key = "'post_' + #postId"),
-            @CacheEvict(key = "'stats_' + @jwtService.getCurrentUserId()"),
-            @CacheEvict(key = "'engagement_*'", allEntries = true)
-    })
-    public void incrementCommentCount(UUID postId) {
-        Post post = getById(postId);
-        post.incrementCommentCount();
-        calculateEngagementRate(post);
-        postRepository.save(post);
-    }
-
-    @Transactional
-    @Caching(evict = {
-            @CacheEvict(key = "'post_' + #postId"),
-            @CacheEvict(key = "'stats_' + @jwtService.getCurrentUserId()"),
-            @CacheEvict(key = "'engagement_*'", allEntries = true)
-    })
-    public void decrementCommentCount(UUID postId) {
-        Post post = getById(postId);
-        post.decrementCommentCount();
-        calculateEngagementRate(post);
-        postRepository.save(post);
-    }
-
     private void calculateEngagementRate(Post post) {
-        float totalInteractions = post.getLikeCount() + post.getCommentCount();
-        post.setEngagementRate(totalInteractions);
+        post.setEngagementRate((float) post.getLikeCount() / (float) post.getUser().getFollowerCount());
     }
 
     private void validatePostOwnership(Post post) {

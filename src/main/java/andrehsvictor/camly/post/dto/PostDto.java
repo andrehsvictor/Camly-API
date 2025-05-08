@@ -10,6 +10,5 @@ public class PostDto {
     private String caption;
     private Boolean liked;
     private Integer likeCount;
-    private Integer commentCount;
 
 }

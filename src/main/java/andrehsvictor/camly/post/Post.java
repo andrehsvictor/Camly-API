@@ -40,10 +40,6 @@ public class Post implements Serializable {
     @Builder.Default
     private Integer likeCount = 0;
 
-    @Column(name = "comment_count", nullable = false)
-    @Builder.Default
-    private Integer commentCount = 0;
-
     @Column(name = "caption", nullable = false)
     private String caption;
 
@@ -82,13 +78,4 @@ public class Post implements Serializable {
         }
     }
 
-    public void incrementCommentCount() {
-        this.commentCount++;
-    }
-
-    public void decrementCommentCount() {
-        if (this.commentCount > 0) {
-            this.commentCount--;
-        }
-    }
 }
