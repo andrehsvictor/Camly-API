@@ -1,0 +1,73 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/camly
+    username: camly
+    password: camly
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    show-sql: true
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        "[format_sql]": true
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+  data:
+    redis:
+      host: localhost
+      port: 6379
+  mail:
+    host: localhost
+    port: 8025
+    username: test
+    password: test
+    properties:
+      mail:
+        smtp:
+          auth: false
+          starttls:
+            enable: false
+    test-connection: false
+  servlet:
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+  main:
+    allow-bean-definition-overriding: true
+
+logging:
+  level:
+    "[org.hibernate.SQL]": DEBUG
+    "[org.testcontainers]": INFO
+    "[org.springframework.test]": INFO
+    "[org.springframework.security]": DEBUG
+    "[andrehsvictor.camly]": DEBUG
+
+camly:
+  jwt:
+    rsa:
+      public-key:
+        location: classpath:test-keys/public.pem
+      private-key:
+        location: classpath:test-keys/private.pem
+    access-token:
+      lifespan: 15m
+    refresh-token:
+      lifespan: 1h
+  action-token:
+    email-verification:
+      lifespan: 1h
+    password-reset:
+      lifespan: 1h
+  cors:
+    allowed-origins: "*"
+    allowed-methods: "*"
+  minio:
+    endpoint: http://localhost:9000
+    admin:
+      username: minio
+      password: minio123
+    bucket:
+      name: camly
