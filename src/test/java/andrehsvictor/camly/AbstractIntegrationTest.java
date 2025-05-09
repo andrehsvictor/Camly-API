@@ -11,6 +11,7 @@ import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.GenericContainer;
 import org.testcontainers.containers.PostgreSQLContainer;
+import org.testcontainers.containers.wait.strategy.Wait;
 import org.testcontainers.junit.jupiter.Container;
 import org.testcontainers.junit.jupiter.Testcontainers;
 
@@ -34,6 +35,7 @@ public abstract class AbstractIntegrationTest {
             .withDatabaseName("camly")
             .withUsername("camly")
             .withPassword("camly")
+
             .withReuse(true);
 
     @Container
@@ -46,7 +48,9 @@ public abstract class AbstractIntegrationTest {
 
     @Container
     private static final GenericContainer<?> mailHog = new GenericContainer<>("mailhog/mailhog:latest")
-            .withExposedPorts(8025)
+            .withExposedPorts(1025, 8025)
+            .withEnv("MH_STORAGE", "memory")
+            .waitingFor(Wait.forHttp("/api/v1/messages").forPort(8025).forStatusCode(200))
             .withReuse(true);
 
     @BeforeAll
@@ -70,15 +74,22 @@ public abstract class AbstractIntegrationTest {
         registry.add("spring.data.redis.host", () -> redis.getHost());
         registry.add("spring.data.redis.port", () -> redis.getMappedPort(6379));
         registry.add("camly.minio.endpoint", () -> "http://" + minio.getHost() + ":" + minio.getMappedPort(9000));
-        registry.add("camly.minio.admin.username", () -> "minio");
-        registry.add("camly.minio.admin.password", () -> "minio123");
+        registry.add("camly.minio.admin.username", () -> minio.getEnvMap().get("MINIO_ROOT_USER"));
+        registry.add("camly.minio.admin.password", () -> minio.getEnvMap().get("MINIO_ROOT_PASSWORD"));
         registry.add("camly.minio.bucket.name", () -> "camly");
+        registry.add("spring.mail.host", () -> mailHog.getHost());
+        registry.add("spring.mail.port", () -> mailHog.getMappedPort(1025));
+
     }
 
     @BeforeEach
     void setUp() {
         RestAssured.port = port;
         RestAssured.enableLoggingOfRequestAndResponseIfValidationFails();
+    }
+
+    protected String getMailHogUrl() {
+        return "http://" + mailHog.getHost() + ":" + mailHog.getMappedPort(8025);
     }
 
 }
