@@ -19,7 +19,7 @@ import io.restassured.RestAssured;
 @Testcontainers
 @ActiveProfiles("test")
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
-public abstract class AbstractIT {
+public abstract class AbstractIntegrationTest {
 
     @LocalServerPort
     private int port;
