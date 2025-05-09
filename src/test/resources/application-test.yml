@@ -49,9 +49,9 @@ camly:
   jwt:
     rsa:
       public-key:
-        location: classpath:test-keys/public.pem
+        location: file:certs/public.pem
       private-key:
-        location: classpath:test-keys/private.pem
+        location: file:certs/private.pem
     access-token:
       lifespan: 15m
     refresh-token:
