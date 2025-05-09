@@ -10,7 +10,6 @@ import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.testcontainers.containers.GenericContainer;
-import org.testcontainers.containers.Network;
 import org.testcontainers.containers.PostgreSQLContainer;
 import org.testcontainers.containers.wait.strategy.Wait;
 
@@ -23,29 +22,21 @@ public abstract class AbstractIntegrationTest {
     @LocalServerPort
     private int port;
 
-    private static final Network sharedNetwork = Network.newNetwork();
-
     private static final GenericContainer<?> redis = new GenericContainer<>("redis:alpine")
             .withExposedPorts(6379)
             .waitingFor(Wait.forListeningPort())
-            .withNetwork(sharedNetwork)
-            .withNetworkAliases("redis")
             .withReuse(true);
 
     private static final PostgreSQLContainer<?> postgres = new PostgreSQLContainer<>("postgres:alpine")
             .withDatabaseName("camly")
             .withUsername("camly")
             .withPassword("camly")
-            .withNetwork(sharedNetwork)
-            .withNetworkAliases("postgres")
             .waitingFor(Wait.forListeningPort())
             .withReuse(true);
 
     private static final GenericContainer<?> minio = new GenericContainer<>("quay.io/minio/minio:latest")
             .withCommand("server /data")
             .withExposedPorts(9000)
-            .withNetwork(sharedNetwork)
-            .withNetworkAliases("minio")
             .withEnv("MINIO_ROOT_USER", "minio")
             .withEnv("MINIO_ROOT_PASSWORD", "minio123")
             .waitingFor(Wait.forHttp("/minio/health/live").forPort(9000).forStatusCode(200))
@@ -53,8 +44,6 @@ public abstract class AbstractIntegrationTest {
 
     private static final GenericContainer<?> mailHog = new GenericContainer<>("mailhog/mailhog:latest")
             .withExposedPorts(1025, 8025)
-            .withNetwork(sharedNetwork)
-            .withNetworkAliases("mailhog")
             .withEnv("MH_STORAGE", "memory")
             .waitingFor(Wait.forHttp("/api/v1/messages").forPort(8025).forStatusCode(200))
             .withReuse(true);

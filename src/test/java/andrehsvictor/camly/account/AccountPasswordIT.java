@@ -57,6 +57,11 @@ class AccountPasswordIT extends AbstractAccountIntegrationTest {
                 .body("[0].Content.Headers.From[0]", equalTo("noreply@camly.io"))
                 .body("[0].Content.Body", containsString("token="))
                 .body("[0].Content.Body", containsString("Reset My Password"));
+
+        when()
+                .delete(getMailHogUrl() + "/api/v1/messages")
+                .then()
+                .statusCode(HttpStatus.OK.value());
     }
 
     @Test
