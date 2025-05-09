@@ -12,4 +12,5 @@ public class UserDto {
     private Integer followerCount;
     private Integer followingCount;
     private Integer postCount;
+    private String createdAt;
 }
