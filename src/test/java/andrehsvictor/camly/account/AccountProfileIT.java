@@ -1,6 +1,7 @@
 package andrehsvictor.camly.account;
 
 import static io.restassured.RestAssured.given;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.hasKey;
 import static org.hamcrest.Matchers.not;
@@ -13,6 +14,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 
 import andrehsvictor.camly.account.dto.UpdateAccountDto;
+import andrehsvictor.camly.exception.ResourceNotFoundException;
 import andrehsvictor.camly.user.User;
 
 class AccountProfileIT extends AbstractAccountIntegrationTest {
@@ -84,18 +86,8 @@ class AccountProfileIT extends AbstractAccountIntegrationTest {
                 .then()
                 .statusCode(HttpStatus.NO_CONTENT.value());
 
-        given()
-                .header("Authorization", "Bearer " + accessToken)
-                .when()
-                .get("/api/v1/account")
-                .then()
-                .statusCode(HttpStatus.UNAUTHORIZED.value());
-
-        try {
-            userService.getById(testUser.getId());
-            assertTrue(false, "User should not exist after deletion");
-        } catch (Exception e) {
-            assertTrue(true);
-        }
+        assertThatThrownBy(() -> userService.getById(testUser.getId()))
+                .isInstanceOf(ResourceNotFoundException.class)
+                .hasMessageContaining("User not found");
     }
 }
