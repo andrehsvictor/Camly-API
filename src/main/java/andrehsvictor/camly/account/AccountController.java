@@ -27,7 +27,7 @@ public class AccountController {
     @PostMapping("/api/v1/account")
     public ResponseEntity<AccountDto> create(@Valid @RequestBody CreateAccountDto accountDto) {
         AccountDto createdAccount = accountService.create(accountDto);
-        return ResponseEntity.ok(createdAccount);
+        return ResponseEntity.status(201).body(createdAccount);
     }
 
     @PostMapping("/api/v1/account/send-action-email")
