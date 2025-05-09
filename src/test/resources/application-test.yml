@@ -20,16 +20,14 @@ spring:
       port: 6379
   mail:
     host: localhost
-    port: 8025
-    username: test
-    password: test
+    port: 1025
     properties:
       mail:
         smtp:
           auth: false
           starttls:
             enable: false
-    test-connection: false
+    test-connection: true
   servlet:
     multipart:
       max-file-size: 10MB
