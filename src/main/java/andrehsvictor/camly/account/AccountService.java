@@ -1,5 +1,7 @@
 package andrehsvictor.camly.account;
 
+import java.time.LocalDateTime;
+
 import org.springframework.cache.annotation.CacheConfig;
 import org.springframework.cache.annotation.CacheEvict;
 import org.springframework.cache.annotation.Cacheable;
@@ -65,6 +67,7 @@ public class AccountService {
         validateFieldUpdates(user, newEmail, newUsername);
 
         accountMapper.updateUserFromUpdateAccountDto(updateAccountDto, user);
+        user.setUpdatedAt(LocalDateTime.now());
         userService.save(user);
 
         return accountMapper.userToAccountDto(user);
