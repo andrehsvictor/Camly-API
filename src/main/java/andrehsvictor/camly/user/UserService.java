@@ -113,13 +113,12 @@ public class UserService {
         User followed = getById(followedId);
         User follower = getById(followerId);
 
-        boolean isAlreadyFollowing = follower.getFollowing().contains(followed);
-
+        boolean isAlreadyFollowing = followed.getFollowers().contains(follower);
         if (isAlreadyFollowing) {
-            follower.getFollowing().remove(followed);
+            followed.getFollowers().remove(follower);
             updateFollowCounts(followed, follower, -1);
         } else {
-            follower.getFollowing().add(followed);
+            followed.getFollowers().add(follower);
             updateFollowCounts(followed, follower, 1);
         }
 
@@ -129,11 +128,11 @@ public class UserService {
 
     private void updateFollowCounts(User followed, User follower, int delta) {
         if (delta > 0) {
-            followed.setFollowerCount(followed.getFollowerCount() + 1);
-            follower.setFollowingCount(follower.getFollowingCount() + 1);
+            followed.incrementFollowerCount();
+            follower.incrementFollowingCount();
         } else {
-            followed.setFollowerCount(Math.max(0, followed.getFollowerCount() - 1));
-            follower.setFollowingCount(Math.max(0, follower.getFollowingCount() - 1));
+            followed.decrementFollowerCount();
+            follower.decrementFollowingCount();
         }
     }
 
