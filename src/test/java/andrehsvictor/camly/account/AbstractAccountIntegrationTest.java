@@ -1,6 +1,7 @@
 package andrehsvictor.camly.account;
 
 import static io.restassured.RestAssured.given;
+import static io.restassured.RestAssured.when;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -56,5 +57,10 @@ public abstract class AbstractAccountIntegrationTest extends AbstractIntegration
         accessToken = tokenDto.getAccessToken();
 
         testUser = userService.getByEmail(createAccountDto.getEmail());
+
+        when()
+                .delete(getMailHogUrl() + "/api/v1/messages")
+                .then()
+                .statusCode(HttpStatus.OK.value());
     }
 }
