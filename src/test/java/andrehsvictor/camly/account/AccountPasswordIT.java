@@ -1,6 +1,8 @@
 package andrehsvictor.camly.account;
 
 import static io.restassured.RestAssured.given;
+import static io.restassured.RestAssured.when;
+import static org.hamcrest.Matchers.containsString;
 import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.notNullValue;
@@ -44,6 +46,17 @@ class AccountPasswordIT extends AbstractAccountIntegrationTest {
         assertTrue(updatedUser.getResetPasswordToken() != null);
         assertTrue(updatedUser.getResetPasswordTokenExpiresAt() != null);
         assertTrue(updatedUser.getResetPasswordTokenExpiresAt().isAfter(LocalDateTime.now()));
+
+        when().get(getMailHogUrl() + "/api/v1/messages")
+                .then()
+                .statusCode(HttpStatus.OK.value())
+                .body("size()", equalTo(1))
+                .body("[0].To[0].Mailbox", equalTo(testUser.getEmail().split("@")[0]))
+                .body("[0].To[0].Domain", equalTo(testUser.getEmail().split("@")[1]))
+                .body("[0].Content.Headers.Subject[0]", equalTo("Reset your password"))
+                .body("[0].Content.Headers.From[0]", equalTo("noreply@camly.io"))
+                .body("[0].Content.Body", containsString("token="))
+                .body("[0].Content.Body", containsString("Reset My Password"));
     }
 
     @Test
