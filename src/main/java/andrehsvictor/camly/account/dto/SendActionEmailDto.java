@@ -20,7 +20,7 @@ public class SendActionEmailDto {
     private EmailSendingAction action;
 
     @NotBlank(message = "URL is required")
-    @Pattern(regexp = "^(https?://)?(www\\.)?[a-zA-Z0-9-]+\\.[a-zA-Z]{2,}(/\\S*)?$", message = "URL is not valid")
+    @Pattern(regexp = "^(http|https)://.*$", message = "URL must start with http:// or https://")
     @Size(max = 255, message = "URL must be less than 255 characters")
     private String url;
 
