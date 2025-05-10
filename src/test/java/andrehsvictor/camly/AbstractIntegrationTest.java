@@ -74,7 +74,6 @@ public abstract class AbstractIntegrationTest {
         registry.add("camly.minio.bucket.name", () -> "camly");
         registry.add("spring.mail.host", () -> mailHog.getHost());
         registry.add("spring.mail.port", () -> mailHog.getMappedPort(1025));
-
     }
 
     @BeforeEach
