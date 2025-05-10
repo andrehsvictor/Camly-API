@@ -2,7 +2,6 @@ package andrehsvictor.camly;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.BeforeEach;
 import org.springframework.boot.test.context.SpringBootTest;
@@ -60,14 +59,6 @@ public abstract class AbstractIntegrationTest {
         assertThat(redis.isRunning()).isTrue();
         assertThat(minio.isRunning()).isTrue();
         assertThat(mailHog.isRunning()).isTrue();
-    }
-
-    @AfterAll
-    static void stopContainers() {
-        redis.stop();
-        postgres.stop();
-        minio.stop();
-        mailHog.stop();
     }
 
     @DynamicPropertySource
