@@ -6,6 +6,9 @@ import static org.hamcrest.Matchers.equalTo;
 import static org.hamcrest.Matchers.greaterThan;
 import static org.hamcrest.Matchers.not;
 import static org.hamcrest.Matchers.notNullValue;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.mock;
+import static org.mockito.Mockito.when;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -13,6 +16,10 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
+
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdToken;
+import com.google.api.client.googleapis.auth.oauth2.GoogleIdTokenVerifier;
 
 import andrehsvictor.camly.AbstractIntegrationTest;
 import andrehsvictor.camly.account.dto.CreateAccountDto;
@@ -30,9 +37,17 @@ public class TokenControllerIT extends AbstractIntegrationTest {
     @Autowired
     private UserService userService;
 
+    @MockitoBean
+    private GoogleIdTokenVerifier googleIdTokenVerifier;
+
     private User testUser;
     private String username;
     private String password;
+    private final String MOCK_ID_TOKEN = "mock_google_id_token";
+    private final String TEST_EMAIL = "google_user@gmail.com";
+    private final String TEST_SUBJECT = "google_user_id_123456";
+    private final String TEST_NAME = "Google Test User";
+    private final String TEST_PICTURE = "https://lh3.googleusercontent.com/test_picture";
 
     @BeforeEach
     void setupTestUser() {
@@ -58,6 +73,24 @@ public class TokenControllerIT extends AbstractIntegrationTest {
 
         testUser.setEmailVerified(true);
         userService.save(testUser);
+
+        try {
+            GoogleIdToken mockIdToken = mock(GoogleIdToken.class);
+            GoogleIdToken.Payload mockPayload = new GoogleIdToken.Payload();
+
+            mockPayload.setEmail(TEST_EMAIL);
+            mockPayload.setEmailVerified(true);
+            mockPayload.setSubject(TEST_SUBJECT);
+            mockPayload.set("name", TEST_NAME);
+            mockPayload.set("picture", TEST_PICTURE);
+
+            when(mockIdToken.getPayload()).thenReturn(mockPayload);
+
+            when(googleIdTokenVerifier.verify(MOCK_ID_TOKEN)).thenReturn(mockIdToken);
+            when(googleIdTokenVerifier.verify(anyString())).thenReturn(null);
+        } catch (Exception e) {
+            throw new RuntimeException("Failed to set up Google mock", e);
+        }
     }
 
     @Test
@@ -97,7 +130,7 @@ public class TokenControllerIT extends AbstractIntegrationTest {
                 .then()
                 .statusCode(HttpStatus.UNAUTHORIZED.value())
                 .body("status", equalTo(HttpStatus.UNAUTHORIZED.value()))
-                .body("message", containsString("Bad credentials"))
+                .body("message", containsString("Invalid credentials"))
                 .body("timestamp", notNullValue());
     }
 
@@ -138,8 +171,8 @@ public class TokenControllerIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @DisplayName("Should return unauthorized with invalid refresh token")
-    void shouldReturnUnauthorizedWithInvalidRefreshToken() {
+    @DisplayName("Should return bad request with invalid refresh token format")
+    void shouldReturnBadRequestWithInvalidRefreshTokenFormat() {
         RefreshTokenDto refreshTokenDto = RefreshTokenDto.builder()
                 .refreshToken("invalid_refresh_token")
                 .build();
@@ -150,9 +183,11 @@ public class TokenControllerIT extends AbstractIntegrationTest {
                 .when()
                 .post("/api/v1/token/refresh")
                 .then()
-                .statusCode(HttpStatus.UNAUTHORIZED.value())
-                .body("status", equalTo(HttpStatus.UNAUTHORIZED.value()))
-                .body("message", containsString("Invalid refresh token"))
+                .statusCode(HttpStatus.BAD_REQUEST.value())
+                .body("status", equalTo(HttpStatus.BAD_REQUEST.value()))
+                .body("message", containsString("Validation failed"))
+                .body("errors[0].field", equalTo("refreshToken"))
+                .body("errors[0].message", containsString("Refresh token should be a valid JWT"))
                 .body("timestamp", notNullValue());
     }
 
@@ -186,6 +221,18 @@ public class TokenControllerIT extends AbstractIntegrationTest {
                 .then()
                 .statusCode(HttpStatus.NO_CONTENT.value());
 
+        RevokeTokenDto revokeAccessTokenDto = RevokeTokenDto.builder()
+                .token(initialToken.getAccessToken())
+                .build();
+
+        given()
+                .contentType(ContentType.JSON)
+                .body(revokeAccessTokenDto)
+                .when()
+                .post("/api/v1/token/revoke")
+                .then()
+                .statusCode(HttpStatus.NO_CONTENT.value());
+
         RefreshTokenDto refreshTokenDto = RefreshTokenDto.builder()
                 .refreshToken(initialToken.getRefreshToken())
                 .build();
@@ -198,8 +245,18 @@ public class TokenControllerIT extends AbstractIntegrationTest {
                 .then()
                 .statusCode(HttpStatus.UNAUTHORIZED.value())
                 .body("status", equalTo(HttpStatus.UNAUTHORIZED.value()))
-                .body("message", containsString("Invalid refresh token"))
+                .body("message",
+                        containsString(
+                                "An error occurred while attempting to decode the Jwt: The token has been revoked"))
                 .body("timestamp", notNullValue());
+
+        given()
+                .contentType(ContentType.JSON)
+                .header("Authorization", "Bearer " + initialToken.getAccessToken())
+                .when()
+                .get("/api/v1/account")
+                .then()
+                .statusCode(HttpStatus.UNAUTHORIZED.value());
     }
 
     @Test
@@ -223,10 +280,10 @@ public class TokenControllerIT extends AbstractIntegrationTest {
     }
 
     @Test
-    @DisplayName("Should handle Google authentication")
-    void shouldHandleGoogleAuthentication() {
+    @DisplayName("Should return error with invalid Google ID token")
+    void shouldReturnErrorWithInvalidGoogleIdToken() {
         IdTokenDto idTokenDto = IdTokenDto.builder()
-                .idToken("mock_google_id_token")
+                .idToken("invalid_google_token")
                 .build();
 
         given()
@@ -235,6 +292,6 @@ public class TokenControllerIT extends AbstractIntegrationTest {
                 .when()
                 .post("/api/v1/token/google")
                 .then()
-                .statusCode(not(equalTo(HttpStatus.OK.value())));
+                .statusCode(HttpStatus.BAD_REQUEST.value());
     }
 }

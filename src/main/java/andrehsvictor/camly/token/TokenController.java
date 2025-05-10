@@ -1,5 +1,6 @@
 package andrehsvictor.camly.token;
 
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -29,8 +30,9 @@ public class TokenController {
     }
 
     @PostMapping("/api/v1/token/revoke")
-    public void revoke(@Valid @RequestBody RevokeTokenDto revokeTokenDto) {
+    public ResponseEntity<Void> revoke(@Valid @RequestBody RevokeTokenDto revokeTokenDto) {
         tokenService.revoke(revokeTokenDto);
+        return ResponseEntity.noContent().build();
     }
 
     @PostMapping("/api/v1/token/google")
