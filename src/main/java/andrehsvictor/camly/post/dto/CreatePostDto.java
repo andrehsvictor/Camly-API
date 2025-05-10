@@ -1,10 +1,9 @@
 package andrehsvictor.camly.post.dto;
 
-import com.google.auto.value.AutoValue.Builder;
-
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+import lombok.Builder;
 import lombok.Data;
 
 @Data
