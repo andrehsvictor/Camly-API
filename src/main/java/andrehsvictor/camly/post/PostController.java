@@ -75,7 +75,7 @@ public class PostController {
         return ResponseEntity.ok(postStats);
     }
 
-    @GetMapping("/api/v1/user/{userId}/posts")
+    @GetMapping("/api/v1/users/{userId}/posts")
     public ResponseEntity<Page<PostDto>> getAllByUserId(
             @PathVariable UUID userId,
             Pageable pageable) {
