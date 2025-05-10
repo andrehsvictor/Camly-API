@@ -29,6 +29,7 @@ spring:
           auth: false
           starttls:
             enable: false
+    test-connection: true
   servlet:
     multipart:
       max-file-size: 10MB
@@ -42,12 +43,27 @@ logging:
 
 camly:
   jwt:
-    secret: ${JWT_SECRET:devSecretKeyForDevelopmentDoNotUseInProduction}
-    expiration: 86400000 # 24 hours in milliseconds
-  storage:
-    minio:
-      endpoint: http://localhost:9000
-      access-key: minioadmin
-      secret-key: minioadmin
-      bucket-name: camly-images
-      secured: false
+    rsa:
+      public-key:
+        location: file:certs/public.pem
+      private-key:
+        location: file:certs/private.pem
+    access-token:
+      lifespan: 15m
+    refresh-token:
+      lifespan: 1h
+  action-token:
+    email-verification:
+      lifespan: 1h
+    password-reset:
+      lifespan: 1h
+  cors:
+    allowed-origins: "*"
+    allowed-methods: "*"
+  minio:
+    endpoint: http://localhost:9000
+    admin:
+      username: minioadmin
+      password: minioadmin
+    bucket:
+      name: camly
