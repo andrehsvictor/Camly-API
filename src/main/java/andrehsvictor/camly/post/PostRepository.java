@@ -6,6 +6,7 @@ import java.util.UUID;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.NativeQuery;
 import org.springframework.data.jpa.repository.Query;
 
 public interface PostRepository extends JpaRepository<Post, UUID> {
@@ -18,7 +19,10 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
     @Query("""
             SELECT p
             FROM Post p
-            WHERE (LOWER(:query) IS NULL OR LOWER(p.user.username) LIKE LOWER(CONCAT('%', :query, '%')))
+            WHERE (
+                (LOWER(:query) IS NULL
+                OR LOWER(p.caption) LIKE CONCAT('%', LOWER(:query), '%')
+                OR LOWER(p.user.username) LIKE CONCAT('%', LOWER(:query), '%')))
                 AND (:username IS NULL OR p.user.username = :username)
             """)
     Page<Post> findAllWithFilters(
@@ -26,14 +30,15 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
             String username,
             Pageable pageable);
 
+    @Query("SELECT p FROM Post p WHERE p.user.id = :userId")
     Page<Post> findAllByUserId(UUID userId, Pageable pageable);
 
-    @Query("SELECT COUNT(p.id) > 0 FROM Post p WHERE p.user.id = :userId AND p.id = :postId")
+    @NativeQuery("SELECT EXISTS (SELECT 1 FROM likes l WHERE l.user_id = :userId AND l.post_id = :postId)")
     boolean existsLikeByUserIdAndPostId(UUID userId, UUID postId);
 
     @Query("""
             SELECT
-            COUNT(p.id) AS postCount,
+            COUNT(p.id) AS totalPosts,
             COALESCE(SUM(p.likeCount), 0) AS totalLikes,
             COALESCE(AVG(p.likeCount), 0) AS averageLikes,
             COALESCE(MAX(p.likeCount), 0) AS maxLikes,
@@ -45,14 +50,4 @@ public interface PostRepository extends JpaRepository<Post, UUID> {
             """)
     PostStats getPostStatsByUserId(UUID userId);
 
-}
-
-interface PostStats {
-    Long getPostCount();
-    Long getTotalLikes();
-    Double getAverageLikes();
-    Long getMaxLikes();
-    Long getMinLikes();
-    Double getEngagementRate();
-    LocalDateTime getLastPostDate();
 }
