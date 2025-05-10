@@ -20,7 +20,7 @@ public class ImageService {
     }
 
     private void validateImage(MultipartFile file) {
-        if (file.isEmpty()) {
+        if (file == null || file.isEmpty()) {
             throw new BadRequestException("File is empty.");
         }
         if (file.getContentType() == null || !file.getContentType().startsWith("image/")) {
