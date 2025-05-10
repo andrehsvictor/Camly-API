@@ -52,7 +52,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
                 .errors(fieldErrors)
                 .build();
 
-        log.error("Validation error: {}", ex.getMessage());
         return new ResponseEntity<>(errorDto, HttpStatus.BAD_REQUEST);
     }
 
@@ -62,7 +61,6 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         ErrorDto errorDto = createErrorDto(
                 HttpStatus.PAYLOAD_TOO_LARGE,
                 "File upload size exceeded the maximum allowed");
-        log.error("File upload size exceeded: {}", ex.getMessage());
         return new ResponseEntity<>(errorDto, HttpStatus.PAYLOAD_TOO_LARGE);
     }
 
@@ -76,57 +74,48 @@ public class GlobalExceptionHandler extends ResponseEntityExceptionHandler {
         ErrorDto errorDto = createErrorDto(
                 HttpStatus.BAD_REQUEST,
                 "Missing required parameter: " + ex.getParameterName());
-
-        log.error("Missing parameter: {}", ex.getParameterName());
         return new ResponseEntity<>(errorDto, HttpStatus.BAD_REQUEST);
     }
 
     @ExceptionHandler(BadRequestException.class)
     public ResponseEntity<ErrorDto> handleBadRequestException(BadRequestException ex) {
-        return createErrorResponse(HttpStatus.BAD_REQUEST, ex.getMessage(), "Bad request");
+        return createErrorResponse(HttpStatus.BAD_REQUEST, ex.getMessage());
     }
 
     @ExceptionHandler(ForbiddenOperationException.class)
     public ResponseEntity<ErrorDto> handleForbiddenOperationException(ForbiddenOperationException ex) {
-        return createErrorResponse(HttpStatus.FORBIDDEN, ex.getMessage(), "Forbidden operation");
+        return createErrorResponse(HttpStatus.FORBIDDEN, ex.getMessage());
     }
 
     @ExceptionHandler(ResourceConflictException.class)
     public ResponseEntity<ErrorDto> handleResourceConflictException(ResourceConflictException ex) {
-        return createErrorResponse(HttpStatus.CONFLICT, ex.getMessage(), "Resource conflict");
+        return createErrorResponse(HttpStatus.CONFLICT, ex.getMessage());
     }
 
     @ExceptionHandler(UnauthorizedException.class)
     public ResponseEntity<ErrorDto> handleUnauthorizedException(UnauthorizedException ex) {
-        return createErrorResponse(HttpStatus.UNAUTHORIZED, ex.getMessage(), "Unauthorized access");
+        return createErrorResponse(HttpStatus.UNAUTHORIZED, ex.getMessage());
     }
 
     @ExceptionHandler(ResourceNotFoundException.class)
     public ResponseEntity<ErrorDto> handleResourceNotFoundException(ResourceNotFoundException ex) {
-        return createErrorResponse(HttpStatus.NOT_FOUND, ex.getMessage(), "Resource not found");
+        return createErrorResponse(HttpStatus.NOT_FOUND, ex.getMessage());
     }
 
     @ExceptionHandler({ BadCredentialsException.class, AuthenticationException.class })
     public ResponseEntity<ErrorDto> handleAuthenticationException(Exception ex) {
-        return createErrorResponse(HttpStatus.UNAUTHORIZED, ex.getMessage(), "Authentication failed");
+        return createErrorResponse(HttpStatus.UNAUTHORIZED, ex.getMessage());
     }
 
     @ExceptionHandler(Exception.class)
     public ResponseEntity<ErrorDto> handleGenericException(Exception ex) {
-        log.error("Unexpected error", ex);
         return createErrorResponse(
                 HttpStatus.INTERNAL_SERVER_ERROR,
-                "An unexpected error occurred",
-                null);
+                "An unexpected error occurred");
     }
 
-    private ResponseEntity<ErrorDto> createErrorResponse(HttpStatus status, String message, String logPrefix) {
+    private ResponseEntity<ErrorDto> createErrorResponse(HttpStatus status, String message) {
         ErrorDto errorDto = createErrorDto(status, message);
-
-        if (logPrefix != null) {
-            log.error("{}: {}", logPrefix, message);
-        }
-
         return new ResponseEntity<>(errorDto, status);
     }
 
