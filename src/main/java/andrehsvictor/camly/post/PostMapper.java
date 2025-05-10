@@ -9,8 +9,9 @@ import org.springframework.context.annotation.Lazy;
 import andrehsvictor.camly.post.dto.CreatePostDto;
 import andrehsvictor.camly.post.dto.PostDto;
 import andrehsvictor.camly.post.dto.UpdatePostDto;
+import andrehsvictor.camly.user.UserMapper;
 
-@Mapper(componentModel = "spring")
+@Mapper(componentModel = "spring", uses = { UserMapper.class })
 public abstract class PostMapper {
 
     @Lazy
