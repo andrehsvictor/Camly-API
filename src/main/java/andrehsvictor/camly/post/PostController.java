@@ -55,7 +55,7 @@ public class PostController {
     @GetMapping("/api/v1/posts")
     public ResponseEntity<Page<PostDto>> getAll(
             @RequestParam(required = false, name = "q") String query,
-            @RequestParam(required = false) String username,
+            @RequestParam(required = false, name = "user.username") String username,
             Pageable pageable) {
         Page<Post> posts = postService.getAllWithFilters(query, username, pageable);
         Page<PostDto> postDtos = posts.map(postService::toDto);
