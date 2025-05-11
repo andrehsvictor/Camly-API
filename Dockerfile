@@ -1,12 +1,17 @@
-FROM ghcr.io/graalvm/native-image-community:24.0.1 AS builder
+FROM eclipse-temurin:21-jdk-alpine AS build
 WORKDIR /app
-COPY .mvn/ .mvn/
-COPY mvnw pom.xml ./
-COPY src ./src
-RUN ./mvnw -Pnative native:compile -DskipTests
+COPY mvnw .
+COPY .mvn .mvn
+COPY pom.xml .
+COPY src src
+RUN ./mvnw package -DskipTests
+RUN mkdir -p target/dependency && (cd target/dependency; jar -xf ../*.jar)
 
-FROM alpine:3.21.3 AS runtime
-WORKDIR /app
-COPY --from=builder /app/target/camly-api .
-EXPOSE 8080
-ENTRYPOINT ["./camly-api"]
+FROM eclipse-temurin:21-jre-alpine
+VOLUME /tmp
+ARG DEPENDENCY=/app/target/dependency
+COPY --from=build ${DEPENDENCY}/BOOT-INF/lib /app/lib
+COPY --from=build ${DEPENDENCY}/META-INF /app/META-INF
+COPY --from=build ${DEPENDENCY}/BOOT-INF/classes /app
+ENV SPRING_PROFILES_ACTIVE="prod"
+ENTRYPOINT ["java", "-cp", "app:app/lib/*", "andrehsvictor.camly.CamlyApplication"]
