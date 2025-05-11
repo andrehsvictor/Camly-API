@@ -3,6 +3,9 @@ spring:
     name: camly
   profiles:
     active: @spring.profiles.active@
+  threads:
+    virtual:
+      enabled: true
   jpa:
     open-in-view: false
     properties:
