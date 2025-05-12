@@ -147,7 +147,6 @@ public class GoogleAuthenticationService {
         UserDetailsImpl userDetails = new UserDetailsImpl(user);
         var authorities = Collections.singletonList(
                 new SimpleGrantedAuthority(user.getRole().name()));
-
         return new UsernamePasswordAuthenticationToken(userDetails, null, authorities);
     }
 }
