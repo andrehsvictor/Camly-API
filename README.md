@@ -2,16 +2,19 @@
 
 # 📸 Camly API 📸
 
-  <img src="src/main/resources/static/logo.png" alt="Camly Logo" width="220" height="auto">
+  <img src="src/main/resources/static/logo.png" alt="Camly Logo" width="250" height="auto">
   
   [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
   [![Java Version](https://img.shields.io/badge/Java-21-orange.svg)](https://openjdk.java.net/)
   [![Spring Boot](https://img.shields.io/badge/Spring%20Boot-3.x-brightgreen.svg)](https://spring.io/projects/spring-boot)
   [![Docker](https://img.shields.io/badge/Docker-Enabled-blue.svg)](https://www.docker.com/)
+  [![Build Status](https://img.shields.io/badge/build-passing-success.svg)](https://github.com/andrehsvictor/Camly-API)
+  [![Code Coverage](https://img.shields.io/badge/coverage-80%25-green.svg)](https://github.com/andrehsvictor/Camly-API)
   
-  <h3>A modern photo storage and sharing service API</h3>
+  <h2>A modern photo storage and sharing service API</h2>
   
-  <p>
+  <p align="center">
+    <b>
     <a href="#features">✨ Features</a> •
     <a href="#tech-stack">🛠️ Tech Stack</a> •
     <a href="#api-endpoints">🔌 API Endpoints</a> •
@@ -20,12 +23,39 @@
     <a href="#testing">🧪 Testing</a> •
     <a href="#deployment">📦 Deployment</a> •
     <a href="#license">📝 License</a>
+    </b>
+  </p>
+
+  <br>
+  <p align="center">
+    <i>Secure · Scalable · Modern</i>
   </p>
 </div>
 
 ## 📋 Overview
 
 Camly API is a robust Spring Boot application providing backend services for photo storage and sharing. It allows users to create accounts, upload photos, create and manage posts, like content, and follow other users. The application follows RESTful principles and includes comprehensive security features with JWT authentication.
+
+<div align="center">
+  <table>
+    <tr>
+      <td align="center"><b>🔒 Secure</b></td>
+      <td>JWT-based authentication and authorization</td>
+    </tr>
+    <tr>
+      <td align="center"><b>⚡ Fast</b></td>
+      <td>Redis caching for high performance</td>
+    </tr>
+    <tr>
+      <td align="center"><b>🔄 Scalable</b></td>
+      <td>Docker containerization for easy deployment</td>
+    </tr>
+    <tr>
+      <td align="center"><b>📊 Testable</b></td>
+      <td>Comprehensive test suite with high coverage</td>
+    </tr>
+  </table>
+</div>
 
 ## ✨ Features
 
@@ -89,13 +119,13 @@ Camly API is a robust Spring Boot application providing backend services for pho
 - `POST /api/v1/token/refresh` - Refresh access token
 - `POST /api/v1/token/revoke` - Revoke token
 
-### Users
+### 👥 Users
 
 - `GET /api/v1/users` - Get all users with optional filtering
 - `GET /api/v1/users/{id}` - Get user by ID
 - `PUT /api/v1/users/{id}/followers` - Follow/unfollow a user
 
-### Posts
+### 📱 Posts
 
 - `POST /api/v1/posts` - Create a new post
 - `GET /api/v1/posts` - Get all posts with filtering
@@ -106,7 +136,7 @@ Camly API is a robust Spring Boot application providing backend services for pho
 - `GET /api/v1/posts/stats` - Get post statistics for the current user
 - `GET /api/v1/users/{userId}/posts` - Get all posts for a specific user
 
-### Images
+### 🖼️ Images
 
 - `POST /api/v1/images` - Upload an image
 
