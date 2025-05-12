@@ -35,6 +35,11 @@ jobs:
         with:
           java-version: '21'
           distribution: 'temurin'
+    
+      - name: Set up RSA keys
+        run: |
+          chmod +x rsa-keys.sh
+          ./rsa-keys.sh
 
       - name: Run unit tests
         run: |
