@@ -4,14 +4,11 @@ COPY mvnw .
 COPY .mvn .mvn
 COPY pom.xml .
 COPY src src
-RUN ./mvnw package -DskipTests
-RUN mkdir -p target/dependency && (cd target/dependency; jar -xf ../*.jar)
+RUN ./mvnw clean package -DskipTests
 
-FROM eclipse-temurin:21-jre-alpine
-VOLUME /tmp
-ARG DEPENDENCY=/app/target/dependency
-COPY --from=build ${DEPENDENCY}/BOOT-INF/lib /app/lib
-COPY --from=build ${DEPENDENCY}/META-INF /app/META-INF
-COPY --from=build ${DEPENDENCY}/BOOT-INF/classes /app
+FROM gcr.io/distroless/java21-debian12:nonroot
 ENV SPRING_PROFILES_ACTIVE="prod"
-ENTRYPOINT ["java", "-cp", "app:app/lib/*", "andrehsvictor.camly.CamlyApplication"]
+WORKDIR /app
+COPY --from=build /app/target/*.jar camly.jar
+EXPOSE 8080
+ENTRYPOINT ["java", "-jar", "/app/camly.jar"]
