@@ -6,7 +6,7 @@ COPY pom.xml .
 COPY src src
 RUN ./mvnw clean package -DskipTests
 
-FROM gcr.io/distroless/java21-debian12:nonroot
+FROM gcr.io/distroless/java21-debian12:latest
 ENV SPRING_PROFILES_ACTIVE="prod"
 WORKDIR /app
 COPY --from=build /app/target/*.jar camly.jar
