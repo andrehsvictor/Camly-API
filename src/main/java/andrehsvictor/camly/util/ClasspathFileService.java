@@ -1,19 +1,19 @@
 package andrehsvictor.camly.util;
 
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
+import java.io.InputStream;
+import java.nio.charset.StandardCharsets;
 
 import org.springframework.core.io.ClassPathResource;
 import org.springframework.stereotype.Service;
+import org.springframework.util.StreamUtils;
 
 @Service
 public class ClasspathFileService {
 
     public String getContent(String filePath) {
-        try {
-            Path path = new ClassPathResource(filePath).getFile().toPath();
-            return new String(Files.readString(path));
+        try (InputStream inputStream = new ClassPathResource(filePath).getInputStream()) {
+            return StreamUtils.copyToString(inputStream, StandardCharsets.UTF_8);
         } catch (IOException e) {
             throw new RuntimeException("Failed to read file from classpath: " + filePath, e);
         }
