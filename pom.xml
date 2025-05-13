@@ -120,7 +120,6 @@
 			<version>${springdoc.version}</version>
 		</dependency>
 
-
 		<!-- Development Tools -->
 		<dependency>
 			<groupId>org.springframework.boot</groupId>
@@ -195,12 +194,6 @@
 						</goals>
 					</execution>
 				</executions>
-			</plugin>
-
-			<!-- GraalVM Native Image -->
-			<plugin>
-				<groupId>org.graalvm.buildtools</groupId>
-				<artifactId>native-maven-plugin</artifactId>
 			</plugin>
 
 			<!-- Compiler -->
