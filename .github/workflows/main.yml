@@ -1,4 +1,13 @@
-name: Build and Push Docker Image
+name: CI/CD Pipeline
+run-name: CI/CD Pipeline
+description: |
+  This workflow builds and tests the application, builds a Docker image, and deploys it to Render.
+  It runs on pushes to the main branch and pull requests targeting the main branch.
+  It also runs on version tags that start with 'v'.
+  The workflow consists of three jobs:
+  - `test`: Runs unit and integration tests.
+  - `build-and-push`: Builds the Docker image and pushes it to Docker Hub.
+  - `deploy`: Deploys the application to Render on pull requests.
 
 on:
   push:
@@ -23,11 +32,12 @@ env:
   IMAGE_NAME: ${{ secrets.DOCKER_USERNAME }}/camly
 
 jobs:
-  build-and-push:
+  test:
+    name: Run Tests
     runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
     permissions:
       contents: read
-      packages: write
 
     steps:
       - name: Checkout repository
@@ -39,7 +49,7 @@ jobs:
           java-version: '21'
           distribution: 'temurin'
           cache: 'maven'
-    
+
       - name: Set up RSA keys
         run: |
           chmod +x rsa-keys.sh
@@ -52,6 +62,24 @@ jobs:
       - name: Run integration tests
         run: |
           ./mvnw failsafe:integration-test
+
+  build-and-push:
+    needs: test
+    name: Build and push Docker Image
+    runs-on: ubuntu-latest
+    if: github.event_name != 'pull_request'
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up RSA keys
+        run: |
+          chmod +x rsa-keys.sh
+          ./rsa-keys.sh
 
       - name: Login to Docker Hub
         uses: docker/login-action@v3
@@ -77,8 +105,18 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
-          push: ${{ github.event_name != 'pull_request' }}
+          push: true
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  deploy:
+    runs-on: ubuntu-latest
+    needs: build-and-push
+    name: Deploy to Render
+    if: github.event_name == 'pull_request'
+
+    steps:
+      - name: Deploy to Render
+        run: curl ${{ secrets.RENDER_DEPLOY_HOOK_URL }}
